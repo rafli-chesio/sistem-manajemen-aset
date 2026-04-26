@@ -3,7 +3,9 @@
 use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\AssetController;
 use App\Http\Controllers\BorrowRequestController;
+use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\LocationController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReportController;
@@ -30,52 +32,69 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/notifications/read',  [NotificationController::class, 'markRead'])->name('notifications.read');
     Route::get('/notifications/count',  [NotificationController::class, 'count'])->name('notifications.count');
 
-    // ── Assets (view: all | create/edit/delete: super_admin + kajur) ──────────
-    Route::get('/assets',               [AssetController::class, 'index'])->name('assets.index');
-    Route::get('/assets/{asset}',       [AssetController::class, 'show'])->name('assets.show');
-
+    // ── Categories & Locations (JSON endpoints for inline creation) ───────────
     Route::middleware('role:super_admin|kajur')->group(function () {
-        Route::get('/assets/create',        [AssetController::class, 'create'])->name('assets.create');
-        Route::post('/assets',              [AssetController::class, 'store'])->name('assets.store');
-        Route::get('/assets/{asset}/edit',  [AssetController::class, 'edit'])->name('assets.edit');
-        Route::put('/assets/{asset}',       [AssetController::class, 'update'])->name('assets.update');
-        Route::patch('/assets/{asset}',     [AssetController::class, 'update']);
+        Route::post('/categories', [CategoryController::class, 'store'])->name('categories.store');
+        Route::post('/locations',  [LocationController::class, 'store'])->name('locations.store');
+    });
+    Route::middleware('role:super_admin')->group(function () {
+        Route::delete('/categories/{category}', [CategoryController::class, 'destroy'])->name('categories.destroy');
+        Route::delete('/locations/{location}',  [LocationController::class, 'destroy'])->name('locations.destroy');
+    });
+
+    // ── Assets ────────────────────────────────────────────────────────────────
+    // PENTING: route statis (/assets/create) harus SEBELUM route dinamis (/assets/{asset})
+    Route::get('/assets', [AssetController::class, 'index'])->name('assets.index');
+
+    // Write routes (super_admin + kajur) — statis dulu
+    Route::middleware('role:super_admin|kajur')->group(function () {
+        Route::get('/assets/create',             [AssetController::class, 'create'])->name('assets.create');
+        Route::post('/assets',                   [AssetController::class, 'store'])->name('assets.store');
+        Route::get('/assets/{asset}/edit',       [AssetController::class, 'edit'])->name('assets.edit');
+        Route::put('/assets/{asset}',            [AssetController::class, 'update'])->name('assets.update');
+        Route::patch('/assets/{asset}',          [AssetController::class, 'update']);
         Route::post('/assets/{asset}/mark-lost', [AssetController::class, 'markLost'])->name('assets.mark-lost');
         Route::delete('/asset-images/{image}',   [AssetController::class, 'destroyImage'])->name('asset-images.destroy');
     });
 
+    // Delete — super_admin only
     Route::middleware('role:super_admin')->group(function () {
-        Route::delete('/assets/{asset}',    [AssetController::class, 'destroy'])->name('assets.destroy');
+        Route::delete('/assets/{asset}', [AssetController::class, 'destroy'])->name('assets.destroy');
     });
+
+    // Show (read) — semua authenticated, HARUS SETELAH /assets/create
+    Route::get('/assets/{asset}', [AssetController::class, 'show'])->name('assets.show');
 
     // ── Borrow Requests ───────────────────────────────────────────────────────
-    // View all: super_admin, viewer | View own + Create: kajur | Approve/Reject: super_admin
-    Route::get('/borrows',              [BorrowRequestController::class, 'index'])->name('borrows.index');
-    Route::get('/borrows/{borrow}',     [BorrowRequestController::class, 'show'])->name('borrows.show');
+    Route::get('/borrows', [BorrowRequestController::class, 'index'])->name('borrows.index');
 
+    // Write routes (super_admin + kajur) — statis dulu sebelum {borrow}
     Route::middleware('role:super_admin|kajur')->group(function () {
-        Route::get('/borrows/create',   [BorrowRequestController::class, 'create'])->name('borrows.create');
-        Route::post('/borrows',         [BorrowRequestController::class, 'store'])->name('borrows.store');
+        Route::get('/borrows/create',  [BorrowRequestController::class, 'create'])->name('borrows.create');
+        Route::post('/borrows',        [BorrowRequestController::class, 'store'])->name('borrows.store');
     });
 
+    // Approve/Reject — super_admin only
     Route::middleware('role:super_admin')->group(function () {
         Route::post('/borrows/{borrow}/approve', [BorrowRequestController::class, 'approve'])->name('borrows.approve');
         Route::post('/borrows/{borrow}/reject',  [BorrowRequestController::class, 'reject'])->name('borrows.reject');
     });
 
-    // ── Returns ───────────────────────────────────────────────────────────────
-    // Submit: kajur | View all: super_admin, viewer
+    // Return routes — SEBELUM show agar /borrows/{borrow}/return tidak bentrok
     Route::middleware('role:super_admin|kajur')->group(function () {
         Route::get('/borrows/{borrow}/return',  [ReturnController::class, 'create'])->name('returns.create');
         Route::post('/borrows/{borrow}/return', [ReturnController::class, 'store'])->name('returns.store');
     });
+
+    // Show (read) — semua authenticated, HARUS SETELAH /borrows/create
+    Route::get('/borrows/{borrow}', [BorrowRequestController::class, 'show'])->name('borrows.show');
 
     // ── Users — Super Admin only ──────────────────────────────────────────────
     Route::middleware('role:super_admin')->group(function () {
         Route::resource('users', UserController::class)->except(['show']);
     });
 
-    // ── Reports — super_admin + viewers ──────────────────────────────────────
+    // ── Reports — super_admin + viewer ────────────────────────────────────────
     Route::middleware('role:super_admin|viewer')->group(function () {
         Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
     });

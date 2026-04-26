@@ -2,13 +2,23 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import ImageUploader from '@/Components/ImageUploader.vue';
 import StatusBadge from '@/Components/StatusBadge.vue';
-import { Head, useForm, router } from '@inertiajs/vue3';
+import InlineCreator from '@/Components/InlineCreator.vue';
+import { Head, useForm, router, usePage } from '@inertiajs/vue3';
+import { ref } from 'vue';
 
 const props = defineProps({
     asset:      { type: Object, required: true },
     categories: { type: Array,  default: () => [] },
     locations:  { type: Array,  default: () => [] },
 });
+
+// Local reactive copies so new items can be added without reload
+const localCategories = ref([...props.categories]);
+const localLocations  = ref([...props.locations]);
+
+const page = usePage();
+const canManage = page.props.auth.roles.includes('super_admin') ||
+                  page.props.auth.roles.includes('kajur');
 
 const form = useForm({
     name:        props.asset.name,
@@ -25,6 +35,14 @@ const form = useForm({
     images:      [],
     _method:     'PUT',
 });
+
+function onCategoryCreated(item) {
+    localCategories.value.push(item);
+}
+
+function onLocationCreated(item) {
+    localLocations.value.push(item);
+}
 
 function submit() {
     form.post(route('assets.update', props.asset.id), { forceFormData: true });
@@ -110,20 +128,27 @@ function deleteExistingImage(imageId) {
                             <input v-model="form.stock" type="number" min="0" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-indigo-300 outline-none"/>
                             <p v-if="form.errors.stock" class="text-red-500 text-xs mt-1">{{ form.errors.stock }}</p>
                         </div>
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-1">Kategori</label>
-                            <select v-model="form.category_id" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-indigo-300 outline-none bg-white">
-                                <option value="">— Pilih —</option>
-                                <option v-for="c in categories" :key="c.id" :value="c.id">{{ c.name }}</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-1">Lokasi</label>
-                            <select v-model="form.location_id" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-indigo-300 outline-none bg-white">
-                                <option value="">— Pilih —</option>
-                                <option v-for="l in locations" :key="l.id" :value="l.id">{{ l.name }}</option>
-                            </select>
-                        </div>
+                        <!-- ── Kategori — dengan InlineCreator ───────────────── -->
+                        <InlineCreator
+                            v-model="form.category_id"
+                            :items="localCategories"
+                            label="Kategori"
+                            placeholder="— Pilih —"
+                            create-url="categories.store"
+                            :can-create="canManage"
+                            @item-created="onCategoryCreated"
+                        />
+
+                        <!-- ── Lokasi — dengan InlineCreator ─────────────────── -->
+                        <InlineCreator
+                            v-model="form.location_id"
+                            :items="localLocations"
+                            label="Lokasi"
+                            placeholder="— Pilih —"
+                            create-url="locations.store"
+                            :can-create="canManage"
+                            @item-created="onLocationCreated"
+                        />
                         <div class="sm:col-span-2">
                             <label class="block text-sm font-medium text-slate-700 mb-1">Keterangan</label>
                             <textarea v-model="form.description" rows="3" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-indigo-300 outline-none resize-none"/>

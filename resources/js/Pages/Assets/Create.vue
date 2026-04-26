@@ -1,12 +1,23 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import ImageUploader from '@/Components/ImageUploader.vue';
-import { Head, useForm } from '@inertiajs/vue3';
+import InlineCreator from '@/Components/InlineCreator.vue';
+import { Head, useForm, usePage } from '@inertiajs/vue3';
+import { ref } from 'vue';
 
 const props = defineProps({
     categories: { type: Array, default: () => [] },
     locations:  { type: Array, default: () => [] },
 });
+
+// Local reactive copies so we can push new items without page reload
+const localCategories = ref([...props.categories]);
+const localLocations  = ref([...props.locations]);
+
+// Check if current user can create categories/locations
+const page = usePage();
+const canManage = page.props.auth.roles.includes('super_admin') ||
+                  page.props.auth.roles.includes('kajur');
 
 const form = useForm({
     name:        '',
@@ -21,6 +32,14 @@ const form = useForm({
     asset_code:  '',
     images:      [],
 });
+
+function onCategoryCreated(item) {
+    localCategories.value.push(item);
+}
+
+function onLocationCreated(item) {
+    localLocations.value.push(item);
+}
 
 function submit() {
     form.post(route('assets.store'), {
@@ -103,22 +122,29 @@ function submit() {
                             <input v-model="form.stock" type="number" min="0" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-indigo-300 outline-none"/>
                             <p v-if="form.errors.stock" class="text-red-500 text-xs mt-1">{{ form.errors.stock }}</p>
                         </div>
-                        <!-- Category -->
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-1">Kategori</label>
-                            <select v-model="form.category_id" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-indigo-300 outline-none bg-white">
-                                <option value="">— Pilih Kategori —</option>
-                                <option v-for="c in categories" :key="c.id" :value="c.id">{{ c.name }}</option>
-                            </select>
-                        </div>
-                        <!-- Location -->
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-1">Lokasi</label>
-                            <select v-model="form.location_id" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-indigo-300 outline-none bg-white">
-                                <option value="">— Pilih Lokasi —</option>
-                                <option v-for="l in locations" :key="l.id" :value="l.id">{{ l.name }}</option>
-                            </select>
-                        </div>
+
+                        <!-- ── Kategori — dengan InlineCreator ───────────────── -->
+                        <InlineCreator
+                            v-model="form.category_id"
+                            :items="localCategories"
+                            label="Kategori"
+                            placeholder="— Pilih Kategori —"
+                            create-url="categories.store"
+                            :can-create="canManage"
+                            @item-created="onCategoryCreated"
+                        />
+
+                        <!-- ── Lokasi — dengan InlineCreator ─────────────────── -->
+                        <InlineCreator
+                            v-model="form.location_id"
+                            :items="localLocations"
+                            label="Lokasi"
+                            placeholder="— Pilih Lokasi —"
+                            create-url="locations.store"
+                            :can-create="canManage"
+                            @item-created="onLocationCreated"
+                        />
+
                         <!-- Description -->
                         <div class="sm:col-span-2">
                             <label class="block text-sm font-medium text-slate-700 mb-1">Keterangan</label>

@@ -32,12 +32,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/notifications/read',  [NotificationController::class, 'markRead'])->name('notifications.read');
     Route::get('/notifications/count',  [NotificationController::class, 'count'])->name('notifications.count');
 
-    // ── Categories & Locations (JSON endpoints for inline creation) ───────────
-    Route::middleware('role:super_admin|kajur')->group(function () {
-        Route::post('/categories', [CategoryController::class, 'store'])->name('categories.store');
-        Route::post('/locations',  [LocationController::class, 'store'])->name('locations.store');
-    });
+    // ── Categories & Locations (JSON endpoints — super_admin only) ─────────────
     Route::middleware('role:super_admin')->group(function () {
+        Route::post('/categories',              [CategoryController::class, 'store'])->name('categories.store');
+        Route::post('/locations',               [LocationController::class, 'store'])->name('locations.store');
         Route::delete('/categories/{category}', [CategoryController::class, 'destroy'])->name('categories.destroy');
         Route::delete('/locations/{location}',  [LocationController::class, 'destroy'])->name('locations.destroy');
     });
@@ -46,10 +44,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // PENTING: route statis (/assets/create) harus SEBELUM route dinamis (/assets/{asset})
     Route::get('/assets', [AssetController::class, 'index'])->name('assets.index');
 
-    // Write routes (super_admin + kajur) — statis dulu
-    Route::middleware('role:super_admin|kajur')->group(function () {
+    // Create & Store — super_admin only
+    Route::middleware('role:super_admin')->group(function () {
         Route::get('/assets/create',             [AssetController::class, 'create'])->name('assets.create');
         Route::post('/assets',                   [AssetController::class, 'store'])->name('assets.store');
+    });
+
+    // Edit, Update, Mark Lost — super_admin + kajur
+    Route::middleware('role:super_admin|kajur')->group(function () {
         Route::get('/assets/{asset}/edit',       [AssetController::class, 'edit'])->name('assets.edit');
         Route::put('/assets/{asset}',            [AssetController::class, 'update'])->name('assets.update');
         Route::patch('/assets/{asset}',          [AssetController::class, 'update']);
@@ -68,8 +70,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // ── Borrow Requests ───────────────────────────────────────────────────────
     Route::get('/borrows', [BorrowRequestController::class, 'index'])->name('borrows.index');
 
-    // Write routes (super_admin + kajur) — statis dulu sebelum {borrow}
-    Route::middleware('role:super_admin|kajur')->group(function () {
+    // Buat permintaan — kajur only (admin tidak meminjam aset)
+    Route::middleware('role:kajur')->group(function () {
         Route::get('/borrows/create',  [BorrowRequestController::class, 'create'])->name('borrows.create');
         Route::post('/borrows',        [BorrowRequestController::class, 'store'])->name('borrows.store');
     });
@@ -80,8 +82,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/borrows/{borrow}/reject',  [BorrowRequestController::class, 'reject'])->name('borrows.reject');
     });
 
-    // Return routes — SEBELUM show agar /borrows/{borrow}/return tidak bentrok
-    Route::middleware('role:super_admin|kajur')->group(function () {
+    // Pengembalian — kajur only (yang meminjam yang mengembalikan)
+    Route::middleware('role:kajur')->group(function () {
         Route::get('/borrows/{borrow}/return',  [ReturnController::class, 'create'])->name('returns.create');
         Route::post('/borrows/{borrow}/return', [ReturnController::class, 'store'])->name('returns.store');
     });

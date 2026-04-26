@@ -27,6 +27,7 @@ const form = useForm({
     category_id: '',
     location_id: '',
     type:        'UNIQUE',
+    status:      'AVAILABLE',   // default; untuk CONSUMABLE selalu AVAILABLE
     stock:       null,
     description: '',
     asset_code:  '',
@@ -121,6 +122,15 @@ function submit() {
                             <label class="block text-sm font-medium text-slate-700 mb-1">Jumlah Stok <span class="text-red-500">*</span></label>
                             <input v-model="form.stock" type="number" min="0" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-indigo-300 outline-none"/>
                             <p v-if="form.errors.stock" class="text-red-500 text-xs mt-1">{{ form.errors.stock }}</p>
+                        </div>
+                        <!-- Status (unique only) -->
+                        <div v-if="form.type === 'UNIQUE'">
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Status Awal</label>
+                            <select v-model="form.status" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-indigo-300 outline-none bg-white">
+                                <option value="AVAILABLE">Tersedia</option>
+                                <option value="DAMAGED">Rusak</option>
+                                <option value="LOST">Hilang</option>
+                            </select>
                         </div>
 
                         <!-- ── Kategori — dengan InlineCreator ───────────────── -->

@@ -50,9 +50,25 @@ class RolesAndPermissionsSeeder extends Seeder
 
         // ── Roles ──────────────────────────────────────────────────────
 
-        /** Super Admin — full access */
+        /** Super Admin — full access KECUALI borrow.create & return.create (hak kajur) */
         $superAdmin = Role::firstOrCreate(['name' => 'super_admin', 'guard_name' => 'web']);
-        $superAdmin->syncPermissions(Permission::all());
+        $superAdmin->syncPermissions([
+            // Users
+            'user.view', 'user.create', 'user.edit', 'user.delete',
+            // Assets
+            'asset.view', 'asset.create', 'asset.edit', 'asset.delete',
+            // Categories & Locations
+            'category.view', 'category.create', 'category.edit', 'category.delete',
+            'location.view', 'location.create', 'location.edit', 'location.delete',
+            // Borrow — admin hanya approve/reject & lihat semua, tidak bisa buat/kembalikan
+            'borrow.view', 'borrow.approve', 'borrow.delete',
+            // Returns — admin hanya lihat
+            'return.view',
+            // Reports & Audit
+            'report.view', 'audit.view',
+            // Notifications
+            'notification.view',
+        ]);
 
         /** Viewer (Kepala Sekolah, Bendahara) — read-only */
         $viewer = Role::firstOrCreate(['name' => 'viewer', 'guard_name' => 'web']);
@@ -66,10 +82,10 @@ class RolesAndPermissionsSeeder extends Seeder
             'notification.view',
         ]);
 
-        /** Kajur — manage own assets + submit borrow requests */
+        /** Kajur — hanya bisa lihat aset, submit & proses peminjaman */
         $kajur = Role::firstOrCreate(['name' => 'kajur', 'guard_name' => 'web']);
         $kajur->syncPermissions([
-            'asset.view', 'asset.create', 'asset.edit',
+            'asset.view',
             'category.view',
             'location.view',
             'borrow.view_own', 'borrow.create',

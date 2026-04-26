@@ -26,10 +26,14 @@ class AssetService
 
             // CONSUMABLE must have stock; UNIQUE must not
             if ($data['type'] === Asset::TYPE_UNIQUE) {
-                $data['stock'] = null;
-                $data['status'] = Asset::STATUS_AVAILABLE;
+                $data['stock']  = null;
+                // Pakai status dari form jika ada, fallback ke AVAILABLE
+                $data['status'] = $data['status'] ?? Asset::STATUS_AVAILABLE;
             } else {
-                $data['status'] = null; // consumables don't have a status
+                // CONSUMABLE: status tidak dipakai per-unit, tapi kolom NOT NULL
+                // → simpan AVAILABLE sebagai nilai netral
+                $data['stock']  = $data['stock'] ?? 0;
+                $data['status'] = Asset::STATUS_AVAILABLE;
             }
 
             $asset = Asset::create($data);

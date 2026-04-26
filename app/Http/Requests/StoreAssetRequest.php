@@ -23,6 +23,7 @@ class StoreAssetRequest extends FormRequest
             'category_id' => ['nullable', 'exists:categories,id'],
             'location_id' => ['nullable', 'exists:locations,id'],
             'type'        => ['required', Rule::in([Asset::TYPE_UNIQUE, Asset::TYPE_CONSUMABLE])],
+            'status'      => ['nullable', Rule::in([Asset::STATUS_AVAILABLE, Asset::STATUS_DAMAGED, Asset::STATUS_LOST])],
             'stock'       => ['required_if:type,CONSUMABLE', 'nullable', 'integer', 'min:0'],
             'description' => ['nullable', 'string', 'max:2000'],
             'asset_code'  => ['nullable', 'string', 'max:50', 'unique:assets,asset_code'],

@@ -7,14 +7,31 @@ const props = defineProps({
     availableAssets: { type: Array, default: () => [] },
 });
 
+// ── Auto-compute dates ────────────────────────────────────────────────────────
+const todayDate = new Date();
+const today = todayDate.toISOString().split('T')[0];
+
+const returnDateObj = new Date(todayDate);
+returnDateObj.setDate(returnDateObj.getDate() + 7);
+const returnDate = returnDateObj.toISOString().split('T')[0];
+
+// Format tanggal ke bahasa Indonesia untuk ditampilkan
+function formatDate(isoDate) {
+    return new Date(isoDate).toLocaleDateString('id-ID', {
+        weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+    });
+}
+
+// ── Form ──────────────────────────────────────────────────────────────────────
 const form = useForm({
-    borrow_date: '',
-    return_date: '',
+    borrow_date: today,
+    return_date: returnDate, // 7 hari dari sekarang (untuk UNIQUE)
     notes:       '',
     items:       [],
 });
 
-const search    = ref('');
+// ── Asset search & selection ──────────────────────────────────────────────────
+const search      = ref('');
 const selectedIds = computed(() => form.items.map(i => i.asset_id));
 
 const filteredAssets = computed(() =>
@@ -24,6 +41,11 @@ const filteredAssets = computed(() =>
     )
 );
 
+// Apakah cart mengandung minimal 1 UNIQUE item?
+const hasUniqueItem = computed(() =>
+    form.items.some(i => i._asset?.type === 'UNIQUE')
+);
+
 function toggleAsset(asset) {
     const idx = form.items.findIndex(i => i.asset_id === asset.id);
     if (idx >= 0) {
@@ -31,7 +53,7 @@ function toggleAsset(asset) {
     } else {
         form.items.push({
             asset_id: asset.id,
-            quantity: asset.type === 'UNIQUE' ? 1 : 1,
+            quantity: 1,
             _asset:   asset,
         });
     }
@@ -41,17 +63,12 @@ function isSelected(assetId) {
     return selectedIds.value.includes(assetId);
 }
 
-function getItem(assetId) {
-    return form.items.find(i => i.asset_id === assetId);
-}
-
-const today = new Date().toISOString().split('T')[0];
-
 function submit() {
-    // Strip _asset helper before submit
+    // Kirim return_date hanya jika ada UNIQUE item di cart
+    // Untuk request yang hanya berisi CONSUMABLE, return_date = borrow_date (atau null)
     const payload = {
         borrow_date: form.borrow_date,
-        return_date: form.return_date,
+        return_date: hasUniqueItem.value ? form.return_date : form.borrow_date,
         notes:       form.notes,
         items:       form.items.map(({ asset_id, quantity }) => ({ asset_id, quantity })),
     };
@@ -69,32 +86,62 @@ function submit() {
         <div class="max-w-4xl mx-auto">
             <form @submit.prevent="submit" class="space-y-5">
 
-                <!-- Dates & Notes -->
+                <!-- Info tanggal otomatis -->
                 <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
                     <h2 class="text-sm font-bold text-slate-700 uppercase tracking-wide mb-4">Informasi Peminjaman</h2>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-1">
-                                Tanggal Pinjam <span class="text-red-500">*</span>
-                            </label>
-                            <input v-model="form.borrow_date" type="date" :min="today"
-                                   class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-indigo-300 outline-none"/>
-                            <p v-if="form.errors.borrow_date" class="text-red-500 text-xs mt-1">{{ form.errors.borrow_date }}</p>
+
+                    <!-- Tampilkan tanggal sebagai info card, bukan input -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                        <!-- Tanggal Pinjam -->
+                        <div class="flex items-start gap-3 p-3 rounded-xl bg-indigo-50 border border-indigo-100">
+                            <div class="w-9 h-9 rounded-lg bg-indigo-100 flex items-center justify-center flex-shrink-0">
+                                <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <p class="text-xs font-semibold text-indigo-500 uppercase tracking-wide">Tanggal Pinjam</p>
+                                <p class="text-sm font-bold text-slate-800 mt-0.5">{{ formatDate(today) }}</p>
+                                <p class="text-xs text-indigo-400 mt-0.5">Hari ini (otomatis)</p>
+                            </div>
                         </div>
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-1">
-                                Tanggal Kembali <span class="text-red-500">*</span>
-                            </label>
-                            <input v-model="form.return_date" type="date" :min="form.borrow_date || today"
-                                   class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-indigo-300 outline-none"/>
-                            <p v-if="form.errors.return_date" class="text-red-500 text-xs mt-1">{{ form.errors.return_date }}</p>
+
+                        <!-- Tanggal Kembali — hanya tampil jika ada UNIQUE item -->
+                        <div v-if="hasUniqueItem"
+                             class="flex items-start gap-3 p-3 rounded-xl bg-amber-50 border border-amber-100">
+                            <div class="w-9 h-9 rounded-lg bg-amber-100 flex items-center justify-center flex-shrink-0">
+                                <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <p class="text-xs font-semibold text-amber-500 uppercase tracking-wide">Batas Pengembalian</p>
+                                <p class="text-sm font-bold text-slate-800 mt-0.5">{{ formatDate(returnDate) }}</p>
+                                <p class="text-xs text-amber-400 mt-0.5">7 hari sejak peminjaman (otomatis)</p>
+                            </div>
                         </div>
-                        <div class="sm:col-span-2">
-                            <label class="block text-sm font-medium text-slate-700 mb-1">Catatan (opsional)</label>
-                            <textarea v-model="form.notes" rows="2"
-                                      class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-indigo-300 outline-none resize-none"
-                                      placeholder="Keperluan peminjaman..."/>
+
+                        <!-- Info untuk CONSUMABLE only cart -->
+                        <div v-if="!hasUniqueItem && form.items.length > 0"
+                             class="flex items-start gap-3 p-3 rounded-xl bg-sky-50 border border-sky-100">
+                            <div class="w-9 h-9 rounded-lg bg-sky-100 flex items-center justify-center flex-shrink-0">
+                                <svg class="w-5 h-5 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <p class="text-xs font-semibold text-sky-500 uppercase tracking-wide">Barang Habis Pakai</p>
+                                <p class="text-sm text-slate-700 mt-0.5">Tidak ada batas pengembalian untuk barang habis pakai.</p>
+                            </div>
                         </div>
+                    </div>
+
+                    <!-- Catatan -->
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Catatan (opsional)</label>
+                        <textarea v-model="form.notes" rows="2"
+                                  class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-indigo-300 outline-none resize-none"
+                                  placeholder="Keperluan peminjaman..."/>
                     </div>
                 </div>
 
@@ -108,8 +155,11 @@ function submit() {
                              class="flex items-center gap-3 bg-white rounded-xl px-4 py-2.5 shadow-sm">
                             <div class="flex-1 min-w-0">
                                 <p class="text-sm font-semibold text-slate-800 truncate">{{ item._asset.name }}</p>
-                                <p class="text-xs text-slate-400">{{ item._asset.type === 'UNIQUE' ? 'Barang Unik' : 'Habis Pakai' }}</p>
+                                <p class="text-xs text-slate-400">
+                                    {{ item._asset.type === 'UNIQUE' ? '🔖 Barang Unik — ada batas kembali' : '📦 Habis Pakai — tanpa batas kembali' }}
+                                </p>
                             </div>
+                            <!-- Qty adjuster hanya untuk CONSUMABLE -->
                             <div v-if="item._asset.type === 'CONSUMABLE'" class="flex items-center gap-2">
                                 <button type="button" @click="item.quantity = Math.max(1, item.quantity - 1)"
                                         class="w-7 h-7 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center font-bold hover:bg-slate-200">−</button>
@@ -152,15 +202,24 @@ function submit() {
                             <!-- Thumbnail -->
                             <div class="w-10 h-10 rounded-lg bg-slate-100 overflow-hidden flex-shrink-0">
                                 <img v-if="asset.images?.length" :src="'/storage/' + asset.images[0].path" class="w-full h-full object-cover"/>
+                                <div v-else class="w-full h-full flex items-center justify-center text-slate-300">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                    </svg>
+                                </div>
                             </div>
                             <div class="flex-1 min-w-0">
                                 <p class="text-sm font-semibold text-slate-800 truncate">{{ asset.name }}</p>
                                 <p class="text-xs text-slate-400 mt-0.5">
                                     {{ asset.category?.name ?? '—' }}
+                                    <span class="mx-1">·</span>
+                                    <span :class="asset.type === 'UNIQUE' ? 'text-violet-600' : 'text-sky-600'" class="font-medium">
+                                        {{ asset.type === 'UNIQUE' ? '🔖 Unik' : '📦 Habis Pakai' }}
+                                    </span>
                                     <span v-if="asset.type === 'CONSUMABLE'" class="ml-2 font-medium text-sky-600">Stok: {{ asset.stock }}</span>
                                 </p>
                             </div>
-                            <!-- Check -->
+                            <!-- Checkbox -->
                             <div class="w-6 h-6 rounded-full flex-shrink-0 flex items-center justify-center border-2 transition-all"
                                  :class="isSelected(asset.id) ? 'bg-indigo-600 border-indigo-600' : 'border-slate-300'">
                                 <svg v-if="isSelected(asset.id)" class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">

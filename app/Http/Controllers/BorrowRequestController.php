@@ -59,10 +59,28 @@ class BorrowRequestController extends Controller
     public function store(StoreBorrowRequest $request): RedirectResponse
     {
         try {
+            $items      = $request->input('items');
+            $borrowDate = today();
+
+            // Cek apakah request mengandung UNIQUE asset
+            $hasUnique = collect($items)->contains(function ($item) {
+                $asset = Asset::find($item['asset_id']);
+                return $asset && $asset->isUnique();
+            });
+
+            // Tanggal kembali: +7 hari untuk UNIQUE, sama dengan borrow_date untuk CONSUMABLE only
+            $returnDate = $hasUnique
+                ? $borrowDate->copy()->addDays(7)
+                : $borrowDate->copy();
+
             $borrow = $this->borrowService->createRequest(
                 auth()->user(),
-                $request->only(['borrow_date', 'return_date', 'notes']),
-                $request->input('items')
+                [
+                    'borrow_date' => $borrowDate->toDateString(),
+                    'return_date' => $returnDate->toDateString(),
+                    'notes'       => $request->input('notes'),
+                ],
+                $items
             );
 
             return redirect()->route('borrows.show', $borrow)
@@ -79,7 +97,7 @@ class BorrowRequestController extends Controller
         return Inertia::render('Borrows/Show', [
             'borrow'     => $borrow,
             'canApprove' => auth()->user()->can('borrow.approve'),
-            'canReturn'  => auth()->user()->hasAnyRole(['super_admin', 'kajur']),
+            'canReturn'  => auth()->user()->hasRole('kajur'),  // hanya kajur yang mengembalikan
         ]);
     }
 

@@ -123,7 +123,7 @@ function formatDatetime(raw) {
                     </button>
                 </div>
 
-                <!-- Return button -->
+                <!-- Return button — hanya untuk UNIQUE items -->
                 <div v-if="canReturn && isReturnable" class="mt-5 pt-5 border-t border-slate-100">
                     <Link :href="route('returns.create', borrow.id)"
                           class="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 transition-colors w-fit">
@@ -132,6 +132,22 @@ function formatDatetime(raw) {
                         </svg>
                         Proses Pengembalian
                     </Link>
+                </div>
+
+                <!-- Info untuk CONSUMABLE-only: tidak ada pengembalian -->
+                <div v-if="canReturn && ['APPROVED','OVERDUE'].includes(borrow.status) && !isReturnable && !borrow.return_record"
+                     class="mt-5 pt-5 border-t border-slate-100">
+                    <div class="flex items-start gap-3 p-3 rounded-xl bg-sky-50 border border-sky-100">
+                        <div class="w-8 h-8 rounded-lg bg-sky-100 flex items-center justify-center flex-shrink-0">
+                            <svg class="w-4 h-4 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <p class="text-sm font-semibold text-sky-700">Barang Habis Pakai</p>
+                            <p class="text-xs text-sky-600 mt-0.5">Barang habis pakai tidak perlu diproses pengembaliannya. Peminjaman ini dianggap selesai setelah disetujui.</p>
+                        </div>
+                    </div>
                 </div>
             </div>
 

@@ -65,13 +65,13 @@ function submit() {
                         <!-- Name -->
                         <div class="sm:col-span-2">
                             <label class="block text-sm font-medium text-slate-700 mb-1">Nama Aset <span class="text-red-500">*</span></label>
-                            <input v-model="form.name" type="text" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 outline-none" placeholder="cth. Laptop Dell Inspiron"/>
+                            <input v-model="form.name" type="text" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 outline-none" placeholder="cth. Laptop ASUS"/>
                             <p v-if="form.errors.name" class="text-red-500 text-xs mt-1">{{ form.errors.name }}</p>
                         </div>
                         <!-- Brand -->
                         <div>
                             <label class="block text-sm font-medium text-slate-700 mb-1">Merek</label>
-                            <input v-model="form.brand" type="text" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-indigo-300 outline-none" placeholder="cth. Dell"/>
+                            <input v-model="form.brand" type="text" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-indigo-300 outline-none" placeholder="cth. ASUS"/>
                         </div>
                         <!-- Year -->
                         <div>

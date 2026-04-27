@@ -12,7 +12,7 @@ const props = defineProps({
     canApprove: { type: Boolean, default: false },
 });
 
-const page     = usePage();
+const page      = usePage();
 const canCreate = page.props.auth.permissions.includes('borrow.create');
 
 const search = ref(props.filters.search ?? '');
@@ -28,12 +28,19 @@ const applyFilters = debounce(() => {
 watch([search, status], applyFilters);
 
 const statusColors = {
-    PENDING: 'bg-amber-50 border-amber-200',
+    PENDING:  'bg-amber-50 border-amber-200',
     APPROVED: 'bg-emerald-50 border-emerald-200',
     REJECTED: 'bg-red-50 border-red-200',
-    OVERDUE: 'bg-orange-50 border-orange-200',
+    OVERDUE:  'bg-orange-50 border-orange-200',
     RETURNED: 'bg-slate-50 border-slate-200',
 };
+
+function formatDate(raw) {
+    if (!raw) return '—';
+    const d = new Date(raw);
+    if (isNaN(d)) return raw;
+    return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+}
 </script>
 
 <template>
@@ -83,7 +90,9 @@ const statusColors = {
                         <div>
                             <p class="font-semibold text-slate-800">{{ b.user?.name }}</p>
                             <p class="text-xs text-slate-500 mt-0.5">
-                                {{ b.items?.length ?? 0 }} barang · Pinjam {{ b.borrow_date }} · Kembali {{ b.return_date }}
+                                {{ b.items?.length ?? 0 }} barang
+                                · Pinjam {{ formatDate(b.borrow_date) }}
+                                · Kembali {{ formatDate(b.return_date) }}
                             </p>
                         </div>
                     </div>

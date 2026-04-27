@@ -6,6 +6,7 @@ use App\Models\Asset;
 use App\Models\BorrowRequest;
 use App\Models\Return_;
 use App\Models\ReturnImage;
+use App\Models\ReturnItem;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
@@ -21,13 +22,16 @@ class ReturnService
      * Business rules enforced:
      * - Request must be APPROVED or OVERDUE
      * - At least 1 photo must be provided
-     * - No partial returns — all items in the request are returned at once
-     * - Consumable items cannot be returned (filtered out automatically)
+     * - No partial returns — all UNIQUE items returned at once
+     * - Consumable items are excluded (stock already deducted at approval)
+     * - Per-item condition tracked via return_items table
+     *
+     * @param  array<int, array{borrow_item_id: int, condition_after: string, notes: ?string}> $itemConditions
      */
     public function processReturn(
         BorrowRequest $request,
         User $processor,
-        string $conditionAfter,
+        array $itemConditions,   // ← per-item, bukan satu string lagi
         array $images,
         ?string $notes = null
     ): Return_ {
@@ -39,25 +43,50 @@ class ReturnService
             throw new \RuntimeException('Minimal 1 foto harus diunggah saat pengembalian.');
         }
 
-        // Check: no consumable-only requests eligible for return
-        $hasUniqueItems = $request->items->contains(
-            fn($item) => $item->asset->isUnique()
-        );
-        if (!$hasUniqueItems) {
+        $uniqueItems = $request->items->filter(fn($item) => $item->asset->isUnique());
+
+        if ($uniqueItems->isEmpty()) {
             throw new \RuntimeException('Barang habis pakai tidak bisa dikembalikan.');
         }
 
-        return DB::transaction(function () use ($request, $processor, $conditionAfter, $images, $notes) {
-            // ── Create return record ──────────────────────────────────
+        // Validasi: semua UNIQUE item harus ada kondisinya
+        $submittedIds = collect($itemConditions)->pluck('borrow_item_id')->toArray();
+        foreach ($uniqueItems as $item) {
+            if (!in_array($item->id, $submittedIds)) {
+                throw new \RuntimeException(
+                    "Kondisi untuk \"{$item->asset->name}\" belum diisi."
+                );
+            }
+        }
+
+        return DB::transaction(function () use ($request, $processor, $itemConditions, $images, $notes, $uniqueItems) {
+
+            // ── Tentukan kondisi paling buruk sebagai kondisi global return ──
+            $conditionOrder  = ['GOOD' => 4, 'FAIR' => 3, 'POOR' => 2, 'DAMAGED' => 1];
+            $worstCondition  = collect($itemConditions)
+                ->sortBy(fn($ic) => $conditionOrder[$ic['condition_after']] ?? 4)
+                ->first()['condition_after'] ?? 'GOOD';
+
+            // ── Buat record return utama ───────────────────────────────────
             $return = Return_::create([
-                'request_id'   => $request->id,
-                'processed_by' => $processor->id,
-                'returned_at'  => now(),
-                'condition_after' => $conditionAfter,
-                'notes'        => $notes,
+                'request_id'      => $request->id,
+                'processed_by'    => $processor->id,
+                'returned_at'     => now(),
+                'condition_after' => $worstCondition,  // agregat: kondisi terburuk
+                'notes'           => $notes,
             ]);
 
-            // ── Store return photos ────────────────────────────────────
+            // ── Simpan kondisi PER ITEM ke return_items ────────────────────
+            foreach ($itemConditions as $ic) {
+                ReturnItem::create([
+                    'return_id'       => $return->id,
+                    'borrow_item_id'  => $ic['borrow_item_id'],
+                    'condition_after' => $ic['condition_after'],
+                    'notes'           => $ic['notes'] ?? null,
+                ]);
+            }
+
+            // ── Simpan foto bukti ──────────────────────────────────────────
             $imagePaths = [];
             foreach ($images as $image) {
                 if ($image instanceof UploadedFile) {
@@ -67,31 +96,29 @@ class ReturnService
                 }
             }
 
-            // ── Update unique asset statuses back to AVAILABLE ─────────
-            foreach ($request->items as $item) {
-                $asset = $item->asset;
-                if ($asset->isUnique()) {
-                    $asset->update([
-                        'status'    => Asset::STATUS_AVAILABLE,
-                        'condition' => $conditionAfter,
-                    ]);
-                }
-                // Consumable items are NOT returned — stock was already deducted
+            // ── Update status & kondisi aset UNIQUE ───────────────────────
+            foreach ($uniqueItems as $item) {
+                $ic    = collect($itemConditions)->firstWhere('borrow_item_id', $item->id);
+                $cond  = $ic['condition_after'] ?? 'GOOD';
+
+                $item->asset->update([
+                    'status'    => Asset::STATUS_AVAILABLE,
+                    'condition' => $cond,   // ← kondisi spesifik per aset
+                ]);
             }
 
-            // ── Update borrow request status ──────────────────────────
+            // ── Update status request ──────────────────────────────────────
             $request->update(['status' => BorrowRequest::STATUS_RETURNED]);
 
-            // ── Audit log with photo references ───────────────────────
+            // ── Audit log ─────────────────────────────────────────────────
             $this->auditLog->log('return.processed', $return, [
-                'request_id'    => $request->id,
-                'condition'     => $conditionAfter,
-                'photo_count'   => count($imagePaths),
-                'photo_paths'   => $imagePaths,
-                'processed_by'  => $processor->name,
+                'request_id'   => $request->id,
+                'item_conditions' => $itemConditions,
+                'photo_count'  => count($imagePaths),
+                'processed_by' => $processor->name,
             ]);
 
-            return $return->load(['images', 'borrowRequest.items.asset']);
+            return $return->load(['images', 'returnItems.borrowItem.asset', 'borrowRequest.items.asset']);
         });
     }
 }

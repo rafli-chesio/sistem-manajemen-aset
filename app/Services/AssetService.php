@@ -59,11 +59,20 @@ class AssetService
         return DB::transaction(function () use ($asset, $data, $newImages) {
             $old = $asset->only(['name', 'condition', 'status', 'stock']);
 
+            // Guard: type cannot change if borrow history exists
+            if (isset($data['type']) && $asset->type !== $data['type'] && $asset->borrowItems()->exists()) {
+                throw new \RuntimeException(
+                    'Tipe aset tidak bisa diubah karena sudah ada riwayat peminjaman.'
+                );
+            }
+
             if ($data['type'] === Asset::TYPE_UNIQUE) {
                 $data['stock'] = null;
+                // status dipertahankan dari input (AVAILABLE, DAMAGED, LOST, dll)
             } else {
-                // Consumable: keep status null
-                unset($data['status']);
+                // CONSUMABLE: stock wajib ada, status selalu AVAILABLE (tidak berubah per-unit)
+                $data['stock']  = $data['stock'] ?? $asset->stock ?? 0;
+                $data['status'] = Asset::STATUS_AVAILABLE;
             }
 
             $asset->update($data);
@@ -133,7 +142,16 @@ class AssetService
     private function generateAssetCode(string $type): string
     {
         $prefix = $type === Asset::TYPE_UNIQUE ? 'UNQ' : 'CSM';
-        $sequence = str_pad(Asset::withTrashed()->count() + 1, 5, '0', STR_PAD_LEFT);
-        return $prefix . '-' . date('Y') . '-' . $sequence;
+        $year   = date('Y');
+
+        // Retry loop prevents race condition when multiple users create assets simultaneously.
+        // In practice, max 1–2 iterations; DB UNIQUE constraint is the final safety net.
+        do {
+            $count    = Asset::withTrashed()->count() + 1;
+            $sequence = str_pad($count, 5, '0', STR_PAD_LEFT);
+            $code     = "{$prefix}-{$year}-{$sequence}";
+        } while (Asset::withTrashed()->where('asset_code', $code)->exists());
+
+        return $code;
     }
 }

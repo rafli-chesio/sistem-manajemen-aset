@@ -21,6 +21,7 @@ class ReturnController extends Controller
             abort(403, 'Permintaan ini tidak dapat dikembalikan.');
         }
 
+        // Load items.asset.images agar form bisa tampilkan info lengkap per item
         $borrow->load(['user', 'items.asset.images']);
 
         return Inertia::render('Returns/Create', [
@@ -34,7 +35,7 @@ class ReturnController extends Controller
             $this->returnService->processReturn(
                 $borrow,
                 auth()->user(),
-                $request->input('condition_after'),
+                $request->input('item_conditions'),   // ← array per item
                 $request->file('images', []),
                 $request->input('notes')
             );

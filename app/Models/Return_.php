@@ -44,4 +44,10 @@ class Return_ extends Model
     {
         return $this->hasMany(ReturnImage::class, 'return_id');
     }
+
+    /** Kondisi per-item setelah dikembalikan */
+    public function returnItems()
+    {
+        return $this->hasMany(ReturnItem::class, 'return_id');
+    }
 }

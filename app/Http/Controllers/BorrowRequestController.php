@@ -92,7 +92,14 @@ class BorrowRequestController extends Controller
 
     public function show(BorrowRequest $borrow): Response
     {
-        $borrow->load(['user', 'items.asset.images', 'approver', 'returnRecord.images', 'returnRecord.processor']);
+        $borrow->load([
+            'user',
+            'items.asset.images',
+            'approver',
+            'returnRecord.images',
+            'returnRecord.processor',
+            'returnRecord.returnItems.borrowItem.asset',  // ← per-item conditions
+        ]);
 
         return Inertia::render('Borrows/Show', [
             'borrow'     => $borrow,

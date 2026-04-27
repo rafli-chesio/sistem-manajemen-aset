@@ -187,14 +187,38 @@ function formatDatetime(raw) {
                         <dd class="text-sm font-medium text-slate-700 mt-0.5">{{ formatDatetime(borrow.return_record.returned_at) }}</dd>
                     </div>
                     <div>
-                        <dt class="text-xs text-slate-400 font-semibold uppercase">Kondisi Akhir</dt>
-                        <dd class="mt-0.5"><StatusBadge :status="borrow.return_record.condition_after"/></dd>
+                        <dt class="text-xs text-slate-400 font-semibold uppercase">Diproses Oleh</dt>
+                        <dd class="text-sm font-medium text-slate-700 mt-0.5">{{ borrow.return_record.processor?.name ?? '—' }}</dd>
                     </div>
                     <div v-if="borrow.return_record.notes" class="col-span-full">
-                        <dt class="text-xs text-slate-400 font-semibold uppercase">Catatan</dt>
+                        <dt class="text-xs text-slate-400 font-semibold uppercase">Catatan Umum</dt>
                         <dd class="text-sm text-slate-600 mt-0.5">{{ borrow.return_record.notes }}</dd>
                     </div>
                 </dl>
+
+                <!-- Per-item conditions dari return_items -->
+                <div v-if="borrow.return_record.return_items?.length" class="mt-4">
+                    <p class="text-xs text-slate-400 font-semibold uppercase mb-2">Kondisi Per Barang</p>
+                    <div class="space-y-2">
+                        <div v-for="ri in borrow.return_record.return_items" :key="ri.id"
+                             class="flex items-center gap-3 p-3 bg-white rounded-xl border border-emerald-100">
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-semibold text-slate-800 truncate">{{ ri.borrow_item?.asset?.name }}</p>
+                                <p class="text-xs font-mono text-slate-400">{{ ri.borrow_item?.asset?.asset_code }}</p>
+                                <p v-if="ri.notes" class="text-xs text-slate-500 mt-0.5 italic">{{ ri.notes }}</p>
+                            </div>
+                            <div class="flex items-center gap-2 flex-shrink-0">
+                                <StatusBadge :status="ri.borrow_item?.condition_before" />
+                                <svg class="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                </svg>
+                                <StatusBadge :status="ri.condition_after" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Foto bukti -->
                 <div v-if="borrow.return_record.images?.length" class="flex flex-wrap gap-2 mt-4">
                     <img v-for="img in borrow.return_record.images" :key="img.id"
                          :src="'/storage/' + img.path" class="h-20 w-20 rounded-xl object-cover border border-emerald-100"/>

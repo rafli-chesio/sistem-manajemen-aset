@@ -32,4 +32,10 @@ class BorrowItem extends Model
     {
         return $this->belongsTo(Asset::class);
     }
+
+    /** Kondisi item ini saat dikembalikan */
+    public function returnItem()
+    {
+        return $this->hasOne(ReturnItem::class, 'borrow_item_id');
+    }
 }

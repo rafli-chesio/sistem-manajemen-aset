@@ -62,13 +62,13 @@ function submit() {
                 <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
                     <h2 class="text-sm font-bold text-slate-700 uppercase tracking-wide mb-4">Informasi Dasar</h2>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <!-- Name -->
+                        <!-- Nama -->
                         <div class="sm:col-span-2">
                             <label class="block text-sm font-medium text-slate-700 mb-1">Nama Aset <span class="text-red-500">*</span></label>
                             <input v-model="form.name" type="text" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 outline-none" placeholder="cth. Laptop ASUS"/>
                             <p v-if="form.errors.name" class="text-red-500 text-xs mt-1">{{ form.errors.name }}</p>
                         </div>
-                        <!-- Brand -->
+                        <!-- Merek -->
                         <div>
                             <label class="block text-sm font-medium text-slate-700 mb-1">Merek</label>
                             <input v-model="form.brand" type="text" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-indigo-300 outline-none" placeholder="cth. ASUS"/>
@@ -80,7 +80,7 @@ function submit() {
                         </div>
                         <!-- Asset Code -->
                         <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-1">Kode Aset <span class="text-slate-400 text-xs">(opsional, auto-generate)</span></label>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Kode Aset <span class="text-slate-400 text-xs"></span></label>
                             <input v-model="form.asset_code" type="text" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-indigo-300 outline-none font-mono" placeholder="cth. UNQ-2024-00001"/>
                             <p v-if="form.errors.asset_code" class="text-red-500 text-xs mt-1">{{ form.errors.asset_code }}</p>
                         </div>
@@ -97,7 +97,6 @@ function submit() {
                     </div>
                 </div>
 
-                <!-- Classification Card -->
                 <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
                     <h2 class="text-sm font-bold text-slate-700 uppercase tracking-wide mb-4">Klasifikasi</h2>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -117,13 +116,13 @@ function submit() {
                                 </label>
                             </div>
                         </div>
-                        <!-- Stock (consumable only) -->
+
                         <div v-if="form.type === 'CONSUMABLE'" class="sm:col-span-2">
                             <label class="block text-sm font-medium text-slate-700 mb-1">Jumlah Stok <span class="text-red-500">*</span></label>
                             <input v-model="form.stock" type="number" min="0" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-indigo-300 outline-none"/>
                             <p v-if="form.errors.stock" class="text-red-500 text-xs mt-1">{{ form.errors.stock }}</p>
                         </div>
-                        <!-- Status (unique only) -->
+
                         <div v-if="form.type === 'UNIQUE'">
                             <label class="block text-sm font-medium text-slate-700 mb-1">Status Awal</label>
                             <select v-model="form.status" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-indigo-300 outline-none bg-white">
@@ -133,7 +132,6 @@ function submit() {
                             </select>
                         </div>
 
-                        <!-- ── Kategori — dengan InlineCreator ───────────────── -->
                         <InlineCreator
                             v-model="form.category_id"
                             :items="localCategories"
@@ -144,7 +142,6 @@ function submit() {
                             @item-created="onCategoryCreated"
                         />
 
-                        <!-- ── Lokasi — dengan InlineCreator ─────────────────── -->
                         <InlineCreator
                             v-model="form.location_id"
                             :items="localLocations"
@@ -155,7 +152,6 @@ function submit() {
                             @item-created="onLocationCreated"
                         />
 
-                        <!-- Description -->
                         <div class="sm:col-span-2">
                             <label class="block text-sm font-medium text-slate-700 mb-1">Keterangan</label>
                             <textarea v-model="form.description" rows="3" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-indigo-300 outline-none resize-none" placeholder="Deskripsi tambahan..."/>
@@ -170,7 +166,6 @@ function submit() {
                     <p v-if="form.errors.images" class="text-red-500 text-xs mt-2">{{ form.errors.images }}</p>
                 </div>
 
-                <!-- Actions -->
                 <div class="flex justify-end gap-3">
                     <a :href="route('assets.index')" class="px-5 py-2.5 rounded-xl border border-slate-200 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors">
                         Batal

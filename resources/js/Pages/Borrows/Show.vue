@@ -10,7 +10,6 @@ const props = defineProps({
     canReturn:  { type: Boolean, default: false },
 });
 
-// ── Forms — harus di top-level ─────────────────────────────────────────────
 const approveForm      = useForm({});
 const rejectForm       = useForm({ rejection_reason: '' });
 const showRejectDialog  = ref(false);
@@ -104,7 +103,6 @@ function formatDatetime(raw) {
                     </div>
                 </dl>
 
-                <!-- Approve / Reject buttons -->
                 <div v-if="canApprove && borrow.status === 'PENDING'" class="flex gap-3 mt-5 pt-5 border-t border-slate-100">
                     <button @click="showApproveDialog = true"
                             :disabled="approveForm.processing"
@@ -123,7 +121,6 @@ function formatDatetime(raw) {
                     </button>
                 </div>
 
-                <!-- Return button — hanya untuk UNIQUE items -->
                 <div v-if="canReturn && isReturnable" class="mt-5 pt-5 border-t border-slate-100">
                     <Link :href="route('returns.create', borrow.id)"
                           class="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 transition-colors w-fit">
@@ -134,7 +131,6 @@ function formatDatetime(raw) {
                     </Link>
                 </div>
 
-                <!-- Info untuk CONSUMABLE-only: tidak ada pengembalian -->
                 <div v-if="canReturn && ['APPROVED','OVERDUE'].includes(borrow.status) && !isReturnable && !borrow.return_record"
                      class="mt-5 pt-5 border-t border-slate-100">
                     <div class="flex items-start gap-3 p-3 rounded-xl bg-sky-50 border border-sky-100">
@@ -151,7 +147,6 @@ function formatDatetime(raw) {
                 </div>
             </div>
 
-            <!-- Items -->
             <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
                 <div class="px-6 py-4 border-b border-slate-100 font-bold text-slate-700">Barang Dipinjam</div>
                 <div class="divide-y divide-slate-100">
@@ -178,7 +173,6 @@ function formatDatetime(raw) {
                 </div>
             </div>
 
-            <!-- Return record -->
             <div v-if="borrow.return_record" class="bg-emerald-50 rounded-2xl border border-emerald-200 p-6">
                 <h2 class="font-bold text-emerald-700 mb-4">Catatan Pengembalian</h2>
                 <dl class="grid grid-cols-2 gap-4">

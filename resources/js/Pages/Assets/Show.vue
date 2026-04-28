@@ -49,7 +49,6 @@ function markLost() {
                          class="h-40 w-auto rounded-xl object-cover cursor-pointer hover:scale-105 transition-transform shadow-sm flex-shrink-0"/>
                 </div>
 
-                <!-- Details -->
                 <div class="p-6">
                     <div class="flex flex-wrap items-start justify-between gap-4 mb-6">
                         <div>
@@ -83,7 +82,6 @@ function markLost() {
                         </div>
                     </dl>
 
-                    <!-- Actions -->
                     <div v-if="canEdit" class="flex flex-wrap gap-3 mt-6 pt-6 border-t border-slate-100">
                         <Link :href="route('assets.edit', asset.id)"
                               class="flex items-center gap-2 px-4 py-2 bg-amber-50 text-amber-700 border border-amber-200 rounded-xl text-sm font-semibold hover:bg-amber-100 transition-colors">
@@ -105,7 +103,6 @@ function markLost() {
             </div>
         </div>
 
-        <!-- Image Lightbox -->
         <Teleport to="body">
             <div v-if="lightboxImage" @click="lightboxImage = null"
                  class="fixed inset-0 bg-black/80 z-[200] flex items-center justify-center p-4 cursor-pointer">

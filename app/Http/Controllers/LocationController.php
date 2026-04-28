@@ -8,10 +8,6 @@ use Illuminate\Http\Request;
 
 class LocationController extends Controller
 {
-    /**
-     * Store a newly created location (AJAX/JSON endpoint).
-     * Used by the inline "Tambah Lokasi" form on the asset create/edit page.
-     */
     public function store(Request $request): JsonResponse
     {
         $this->authorize('location.create');
@@ -31,9 +27,6 @@ class LocationController extends Controller
         ], 201);
     }
 
-    /**
-     * Delete a location.
-     */
     public function destroy(Location $location): JsonResponse
     {
         $this->authorize('location.delete');

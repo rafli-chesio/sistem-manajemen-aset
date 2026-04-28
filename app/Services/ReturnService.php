@@ -16,18 +16,7 @@ class ReturnService
 {
     public function __construct(private readonly AuditLogService $auditLog) {}
 
-    /**
-     * Process the return of a borrow request.
-     *
-     * Business rules enforced:
-     * - Request must be APPROVED or OVERDUE
-     * - At least 1 photo must be provided
-     * - No partial returns — all UNIQUE items returned at once
-     * - Consumable items are excluded (stock already deducted at approval)
-     * - Per-item condition tracked via return_items table
-     *
-     * @param  array<int, array{borrow_item_id: int, condition_after: string, notes: ?string}> $itemConditions
-     */
+
     public function processReturn(
         BorrowRequest $request,
         User $processor,
@@ -49,7 +38,6 @@ class ReturnService
             throw new \RuntimeException('Barang habis pakai tidak bisa dikembalikan.');
         }
 
-        // Validasi: semua UNIQUE item harus ada kondisinya
         $submittedIds = collect($itemConditions)->pluck('borrow_item_id')->toArray();
         foreach ($uniqueItems as $item) {
             if (!in_array($item->id, $submittedIds)) {
@@ -61,13 +49,11 @@ class ReturnService
 
         return DB::transaction(function () use ($request, $processor, $itemConditions, $images, $notes, $uniqueItems) {
 
-            // ── Tentukan kondisi paling buruk sebagai kondisi global return ──
             $conditionOrder  = ['GOOD' => 4, 'FAIR' => 3, 'POOR' => 2, 'DAMAGED' => 1];
             $worstCondition  = collect($itemConditions)
                 ->sortBy(fn($ic) => $conditionOrder[$ic['condition_after']] ?? 4)
                 ->first()['condition_after'] ?? 'GOOD';
 
-            // ── Buat record return utama ───────────────────────────────────
             $return = Return_::create([
                 'request_id'      => $request->id,
                 'processed_by'    => $processor->id,
@@ -76,7 +62,6 @@ class ReturnService
                 'notes'           => $notes,
             ]);
 
-            // ── Simpan kondisi PER ITEM ke return_items ────────────────────
             foreach ($itemConditions as $ic) {
                 ReturnItem::create([
                     'return_id'       => $return->id,
@@ -86,7 +71,6 @@ class ReturnService
                 ]);
             }
 
-            // ── Simpan foto bukti ──────────────────────────────────────────
             $imagePaths = [];
             foreach ($images as $image) {
                 if ($image instanceof UploadedFile) {
@@ -96,7 +80,6 @@ class ReturnService
                 }
             }
 
-            // ── Update status & kondisi aset UNIQUE ───────────────────────
             foreach ($uniqueItems as $item) {
                 $ic    = collect($itemConditions)->firstWhere('borrow_item_id', $item->id);
                 $cond  = $ic['condition_after'] ?? 'GOOD';
@@ -107,10 +90,8 @@ class ReturnService
                 ]);
             }
 
-            // ── Update status request ──────────────────────────────────────
             $request->update(['status' => BorrowRequest::STATUS_RETURNED]);
 
-            // ── Audit log ─────────────────────────────────────────────────
             $this->auditLog->log('return.processed', $return, [
                 'request_id'   => $request->id,
                 'item_conditions' => $itemConditions,

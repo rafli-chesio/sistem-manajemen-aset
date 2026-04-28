@@ -7,7 +7,6 @@ const props = defineProps({
     availableAssets: { type: Array, default: () => [] },
 });
 
-// ── Auto-compute dates ────────────────────────────────────────────────────────
 const todayDate = new Date();
 const today = todayDate.toISOString().split('T')[0];
 
@@ -15,14 +14,12 @@ const returnDateObj = new Date(todayDate);
 returnDateObj.setDate(returnDateObj.getDate() + 7);
 const returnDate = returnDateObj.toISOString().split('T')[0];
 
-// Format tanggal ke bahasa Indonesia untuk ditampilkan
 function formatDate(isoDate) {
     return new Date(isoDate).toLocaleDateString('id-ID', {
         weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
     });
 }
 
-// ── Form ──────────────────────────────────────────────────────────────────────
 const form = useForm({
     borrow_date: today,
     return_date: returnDate, // 7 hari dari sekarang (untuk UNIQUE)
@@ -30,7 +27,6 @@ const form = useForm({
     items:       [],
 });
 
-// ── Asset search & selection ──────────────────────────────────────────────────
 const search      = ref('');
 const selectedIds = computed(() => form.items.map(i => i.asset_id));
 
@@ -41,7 +37,6 @@ const filteredAssets = computed(() =>
     )
 );
 
-// Apakah cart mengandung minimal 1 UNIQUE item?
 const hasUniqueItem = computed(() =>
     form.items.some(i => i._asset?.type === 'UNIQUE')
 );
@@ -90,7 +85,6 @@ function submit() {
                 <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
                     <h2 class="text-sm font-bold text-slate-700 uppercase tracking-wide mb-4">Informasi Peminjaman</h2>
 
-                    <!-- Tampilkan tanggal sebagai info card, bukan input -->
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                         <!-- Tanggal Pinjam -->
                         <div class="flex items-start gap-3 p-3 rounded-xl bg-indigo-50 border border-indigo-100">
@@ -105,8 +99,6 @@ function submit() {
                                 <p class="text-xs text-indigo-400 mt-0.5">Hari ini (otomatis)</p>
                             </div>
                         </div>
-
-                        <!-- Tanggal Kembali — hanya tampil jika ada UNIQUE item -->
                         <div v-if="hasUniqueItem"
                              class="flex items-start gap-3 p-3 rounded-xl bg-amber-50 border border-amber-100">
                             <div class="w-9 h-9 rounded-lg bg-amber-100 flex items-center justify-center flex-shrink-0">
@@ -121,7 +113,6 @@ function submit() {
                             </div>
                         </div>
 
-                        <!-- Info untuk CONSUMABLE only cart -->
                         <div v-if="!hasUniqueItem && form.items.length > 0"
                              class="flex items-start gap-3 p-3 rounded-xl bg-sky-50 border border-sky-100">
                             <div class="w-9 h-9 rounded-lg bg-sky-100 flex items-center justify-center flex-shrink-0">

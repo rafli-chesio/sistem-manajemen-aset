@@ -13,25 +13,21 @@ class AssetService
 {
     public function __construct(private readonly AuditLogService $auditLog) {}
 
-    /**
-     * Create a new asset with optional multi-image upload.
-     */
+
     public function create(array $data, array $images = []): Asset
     {
         return DB::transaction(function () use ($data, $images) {
-            // Auto-generate asset code if not provided
+ 
             if (empty($data['asset_code'])) {
                 $data['asset_code'] = $this->generateAssetCode($data['type']);
             }
 
-            // CONSUMABLE must have stock; UNIQUE must not
             if ($data['type'] === Asset::TYPE_UNIQUE) {
                 $data['stock']  = null;
                 // Pakai status dari form jika ada, fallback ke AVAILABLE
                 $data['status'] = $data['status'] ?? Asset::STATUS_AVAILABLE;
             } else {
-                // CONSUMABLE: status tidak dipakai per-unit, tapi kolom NOT NULL
-                // → simpan AVAILABLE sebagai nilai netral
+
                 $data['stock']  = $data['stock'] ?? 0;
                 $data['status'] = Asset::STATUS_AVAILABLE;
             }
@@ -51,15 +47,12 @@ class AssetService
         });
     }
 
-    /**
-     * Update an existing asset.
-     */
+
     public function update(Asset $asset, array $data, array $newImages = []): Asset
     {
         return DB::transaction(function () use ($asset, $data, $newImages) {
             $old = $asset->only(['name', 'condition', 'status', 'stock']);
 
-            // Guard: type cannot change if borrow history exists
             if (isset($data['type']) && $asset->type !== $data['type'] && $asset->borrowItems()->exists()) {
                 throw new \RuntimeException(
                     'Tipe aset tidak bisa diubah karena sudah ada riwayat peminjaman.'
@@ -68,9 +61,9 @@ class AssetService
 
             if ($data['type'] === Asset::TYPE_UNIQUE) {
                 $data['stock'] = null;
-                // status dipertahankan dari input (AVAILABLE, DAMAGED, LOST, dll)
+
             } else {
-                // CONSUMABLE: stock wajib ada, status selalu AVAILABLE (tidak berubah per-unit)
+
                 $data['stock']  = $data['stock'] ?? $asset->stock ?? 0;
                 $data['status'] = Asset::STATUS_AVAILABLE;
             }
@@ -90,9 +83,7 @@ class AssetService
         });
     }
 
-    /**
-     * Soft-delete an asset (only if it is not currently borrowed).
-     */
+
     public function delete(Asset $asset): void
     {
         DB::transaction(function () use ($asset) {
@@ -105,18 +96,13 @@ class AssetService
         });
     }
 
-    /**
-     * Remove a single image from an asset.
-     */
+
     public function deleteImage(AssetImage $image): void
     {
         Storage::disk('public')->delete($image->path);
         $image->delete();
     }
 
-    /**
-     * Mark a unique asset as LOST.
-     */
     public function markLost(Asset $asset): void
     {
         if (!$asset->isUnique()) {
@@ -127,7 +113,6 @@ class AssetService
         $this->auditLog->log('asset.marked_lost', $asset, ['name' => $asset->name]);
     }
 
-    // ── Private helpers ────────────────────────────────────────────────
 
     private function storeImages(Asset $asset, array $images): void
     {
@@ -144,8 +129,6 @@ class AssetService
         $prefix = $type === Asset::TYPE_UNIQUE ? 'UNQ' : 'CSM';
         $year   = date('Y');
 
-        // Retry loop prevents race condition when multiple users create assets simultaneously.
-        // In practice, max 1–2 iterations; DB UNIQUE constraint is the final safety net.
         do {
             $count    = Asset::withTrashed()->count() + 1;
             $sequence = str_pad($count, 5, '0', STR_PAD_LEFT);

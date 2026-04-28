@@ -14,14 +14,10 @@ class BorrowService
 {
     public function __construct(private readonly AuditLogService $auditLog) {}
 
-    /**
-     * Create a new borrow request with multiple items.
-     * Validates stock availability at submission time.
-     */
     public function createRequest(User $user, array $data, array $items): BorrowRequest
     {
         return DB::transaction(function () use ($user, $data, $items) {
-            // ── Pre-flight stock validation ──────────────────────────
+
             foreach ($items as $item) {
                 $asset = Asset::lockForUpdate()->findOrFail($item['asset_id']);
                 if (!$asset->hasEnoughStock((int) $item['quantity'])) {
@@ -31,7 +27,6 @@ class BorrowService
                 }
             }
 
-            // ── Create the request ───────────────────────────────────
             $request = BorrowRequest::create([
                 'user_id'     => $user->id,
                 'status'      => BorrowRequest::STATUS_PENDING,
@@ -59,10 +54,7 @@ class BorrowService
         });
     }
 
-    /**
-     * Approve a pending borrow request.
-     * Re-validates stock at approval time (critical race condition guard).
-     */
+
     public function approve(BorrowRequest $request, User $approver): BorrowRequest
     {
         if (!$request->isPending()) {
@@ -70,7 +62,7 @@ class BorrowService
         }
 
         return DB::transaction(function () use ($request, $approver) {
-            // ── Critical: re-check stock with row-level locks ─────────
+   
             foreach ($request->items as $item) {
                 $asset = Asset::lockForUpdate()->findOrFail($item->asset_id);
 
@@ -82,7 +74,6 @@ class BorrowService
                 }
             }
 
-            // ── Deduct stock / lock unique assets ─────────────────────
             foreach ($request->items as $item) {
                 $asset = Asset::find($item->asset_id);
                 if ($asset->isUnique()) {
@@ -102,16 +93,13 @@ class BorrowService
                 'approver' => $approver->name,
             ]);
 
-            // ── In-app notification ───────────────────────────────────
+
             $request->user->notify(new BorrowRequestStatusChanged($request, 'approved'));
 
             return $request->fresh();
         });
     }
 
-    /**
-     * Reject a pending borrow request.
-     */
     public function reject(BorrowRequest $request, User $approver, string $reason): BorrowRequest
     {
         if (!$request->isPending()) {
@@ -137,9 +125,7 @@ class BorrowService
         });
     }
 
-    /**
-     * Mark overdue approved requests (called by scheduler).
-     */
+
     public function markOverdue(): int
     {
         $overdue = BorrowRequest::where('status', BorrowRequest::STATUS_APPROVED)
@@ -155,9 +141,6 @@ class BorrowService
         return $overdue->count();
     }
 
-    /**
-     * Auto-reject pending requests older than 3 days (called by scheduler).
-     */
     public function expirePending(): int
     {
         $expired = BorrowRequest::where('status', BorrowRequest::STATUS_PENDING)

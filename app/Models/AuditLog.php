@@ -10,7 +10,7 @@ class AuditLog extends Model
     use HasFactory;
 
     public $timestamps = true;
-    public const UPDATED_AT = null; // No updated_at for logs
+    public const UPDATED_AT = null; 
 
     protected $fillable = [
         'user_id',

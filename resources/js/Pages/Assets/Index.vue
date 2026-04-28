@@ -58,7 +58,6 @@ async function doDelete() {
             <h1 class="text-slate-800 font-bold text-lg">Manajemen Aset</h1>
         </template>
 
-        <!-- Toolbar -->
         <div class="flex flex-col sm:flex-row gap-3 mb-4">
             <div class="relative flex-1">
                 <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -94,7 +93,6 @@ async function doDelete() {
             </Link>
         </div>
 
-        <!-- Table -->
         <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
             <div class="overflow-x-auto">
                 <table class="w-full text-sm">

@@ -92,7 +92,6 @@ function markRead(id, url) {
                         <p class="text-xs text-slate-400 mt-1">{{ notif.created_at?.slice(0,16).replace('T', ' ') }}</p>
                     </div>
 
-                    <!-- Unread dot -->
                     <div v-if="!notif.read_at" class="w-2 h-2 rounded-full bg-indigo-500 flex-shrink-0 mt-2"/>
                 </div>
             </div>

@@ -14,7 +14,6 @@ class ReturnItem extends Model
         'notes',
     ];
 
-    // ── Relasi ──────────────────────────────────────────────────────────────
 
     public function returnRecord(): BelongsTo
     {
@@ -26,9 +25,7 @@ class ReturnItem extends Model
         return $this->belongsTo(BorrowItem::class, 'borrow_item_id');
     }
 
-    // ── Helper ──────────────────────────────────────────────────────────────
 
-    /** Apakah kondisi menurun dibanding sebelum dipinjam? */
     public function isConditionWorsened(): bool
     {
         $order = ['GOOD' => 4, 'FAIR' => 3, 'POOR' => 2, 'DAMAGED' => 1];

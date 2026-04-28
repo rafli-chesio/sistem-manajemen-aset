@@ -15,23 +15,21 @@ class ReportController extends Controller
     {
         $this->authorize('report.view');
 
-        // Asset summary by category
         $assetsByCategory = Category::withCount('assets')
             ->having('assets_count', '>', 0)
             ->get()
             ->map(fn($c) => ['name' => $c->name, 'count' => $c->assets_count]);
 
-        // Asset condition distribution
         $assetsByCondition = Asset::selectRaw('`condition`, count(*) as total')
             ->groupBy('condition')
             ->pluck('total', 'condition');
 
-        // Borrow status distribution
+ 
         $borrowsByStatus = BorrowRequest::selectRaw('status, count(*) as total')
             ->groupBy('status')
             ->pluck('total', 'status');
 
-        // Monthly borrow trend (last 12 months)
+ 
         $borrowTrend = BorrowRequest::selectRaw("DATE_FORMAT(created_at, '%Y-%m-01') as month, count(*) as total")
             ->where('created_at', '>=', now()->subMonths(12))
             ->groupByRaw("DATE_FORMAT(created_at, '%Y-%m-01')")
@@ -42,7 +40,6 @@ class ReportController extends Controller
                 'total' => $b->total,
             ]);
 
-        // Most borrowed assets
         $topAssets = Asset::withCount('borrowItems')
             ->having('borrow_items_count', '>', 0)
             ->orderByDesc('borrow_items_count')

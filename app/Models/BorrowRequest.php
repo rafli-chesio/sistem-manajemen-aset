@@ -16,10 +16,6 @@ class BorrowRequest extends Model
     const STATUS_OVERDUE  = 'OVERDUE';
     const STATUS_RETURNED = 'RETURNED';
 
-    /**
-     * Valid state transitions — documents the lifecycle as code.
-     * Terminal states map to empty arrays.
-     */
     const TRANSITIONS = [
         self::STATUS_PENDING  => [self::STATUS_APPROVED, self::STATUS_REJECTED],
         self::STATUS_APPROVED => [self::STATUS_RETURNED, self::STATUS_OVERDUE],
@@ -83,18 +79,13 @@ class BorrowRequest extends Model
         return $this->status === self::STATUS_OVERDUE;
     }
 
-    /**
-     * A request is returnable if:
-     * 1. Status is APPROVED or OVERDUE
-     * 2. It contains at least one UNIQUE asset (consumables are never returned)
-     */
+
     public function isReturnable(): bool
     {
         if (!in_array($this->status, [self::STATUS_APPROVED, self::STATUS_OVERDUE])) {
             return false;
         }
 
-        // Use loaded relation if available (avoids extra query)
         if ($this->relationLoaded('items')) {
             return $this->items->contains(
                 fn($item) => $item->relationLoaded('asset')
@@ -103,7 +94,6 @@ class BorrowRequest extends Model
             );
         }
 
-        // Fallback: check via subquery (no N+1)
         return $this->items()
             ->whereHas('asset', fn($q) => $q->where('type', \App\Models\Asset::TYPE_UNIQUE))
             ->exists();
@@ -114,9 +104,7 @@ class BorrowRequest extends Model
         return in_array($newStatus, self::TRANSITIONS[$this->status] ?? []);
     }
 
-    /**
-     * Scope: only requests where all items are for UNIQUE assets (eligible for return).
-     */
+
     public function scopeReturnable($query)
     {
         return $query->whereIn('status', [self::STATUS_APPROVED, self::STATUS_OVERDUE]);

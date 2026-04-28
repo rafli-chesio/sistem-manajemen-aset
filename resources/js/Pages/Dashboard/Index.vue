@@ -25,7 +25,6 @@ const statCards = [
             <h1 class="text-slate-800 font-bold text-lg">Dashboard</h1>
         </template>
 
-        <!-- Stat Cards -->
         <div class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-4 mb-6">
             <div v-for="card in statCards" :key="card.key"
                  class="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 flex flex-col gap-3 hover:shadow-md transition-shadow">
@@ -47,7 +46,6 @@ const statCards = [
             </div>
         </div>
 
-        <!-- Recent Borrows -->
         <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
             <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
                 <h2 class="font-bold text-slate-700">Peminjaman Terbaru</h2>

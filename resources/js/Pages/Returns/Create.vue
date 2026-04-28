@@ -9,12 +9,10 @@ const props = defineProps({
     borrow: { type: Object, required: true },
 });
 
-// Hanya UNIQUE items yang bisa dikembalikan
 const uniqueItems = computed(() =>
     props.borrow.items?.filter(i => i.asset?.type === 'UNIQUE') ?? []
 );
 
-// Bangun item_conditions awal: satu entry per UNIQUE borrow_item
 const form = useForm({
     item_conditions: uniqueItems.value.map(item => ({
         borrow_item_id:  item.id,
@@ -32,12 +30,10 @@ const conditionOptions = [
     { val: 'DAMAGED', label: 'Rusak', color: 'red',     icon: '✕' },
 ];
 
-// Map borrow_item_id → form index untuk binding yang mudah
 function getConditionEntry(borrowItemId) {
     return form.item_conditions.find(ic => ic.borrow_item_id === borrowItemId);
 }
 
-// Label warna Tailwind — harus full string agar tidak di-purge
 const colorClasses = {
     emerald: { active: 'border-emerald-500 bg-emerald-50 text-emerald-700', idle: 'border-slate-200 text-slate-500 hover:border-emerald-300' },
     yellow:  { active: 'border-yellow-500 bg-yellow-50 text-yellow-700',   idle: 'border-slate-200 text-slate-500 hover:border-yellow-300' },
@@ -78,7 +74,6 @@ function submit() {
 
         <div class="max-w-2xl mx-auto space-y-5">
 
-            <!-- Info banner -->
             <div class="bg-amber-50 border border-amber-200 rounded-2xl px-5 py-4 flex gap-3">
                 <svg class="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
@@ -95,11 +90,9 @@ function submit() {
 
             <form @submit.prevent="submit" class="space-y-5">
 
-                <!-- ── Per-Item Condition ─────────────────────────────────── -->
                 <div v-for="(item, idx) in uniqueItems" :key="item.id"
                      class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
 
-                    <!-- Header item -->
                     <div class="flex items-center gap-4 px-6 py-4 border-b border-slate-100">
                         <div class="w-12 h-12 rounded-xl bg-slate-100 overflow-hidden flex-shrink-0">
                             <img v-if="item.asset?.images?.length"
@@ -115,14 +108,13 @@ function submit() {
                             <p class="font-bold text-slate-800 truncate">{{ item.asset?.name }}</p>
                             <p class="text-xs font-mono text-slate-400">{{ item.asset?.asset_code }}</p>
                         </div>
-                        <!-- Kondisi sebelum dipinjam -->
+
                         <div class="text-right">
                             <p class="text-xs text-slate-400 mb-1">Kondisi sebelum</p>
                             <StatusBadge v-if="item.condition_before" :status="item.condition_before"/>
                         </div>
                     </div>
 
-                    <!-- Condition selector per item -->
                     <div class="px-6 py-4 space-y-3">
                         <label class="block text-sm font-semibold text-slate-700">
                             Kondisi Saat Dikembalikan
@@ -145,7 +137,6 @@ function submit() {
                             </label>
                         </div>
 
-                        <!-- Indikator perubahan kondisi -->
                         <div v-if="getConditionEntry(item.id) && item.condition_before"
                              class="flex items-center gap-2 text-xs">
                             <span class="text-slate-500">Perubahan:</span>
@@ -165,7 +156,6 @@ function submit() {
                             </span>
                         </div>
 
-                        <!-- Catatan per item (opsional) -->
                         <textarea v-model="getConditionEntry(item.id).notes"
                                   rows="2"
                                   class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-indigo-300 outline-none resize-none"
@@ -178,7 +168,6 @@ function submit() {
                     </p>
                 </div>
 
-                <!-- ── Catatan Umum ─────────────────────────────────────────── -->
                 <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
                     <label class="block text-sm font-semibold text-slate-700 mb-2">Catatan Umum Pengembalian</label>
                     <textarea v-model="form.notes" rows="2"
@@ -186,7 +175,6 @@ function submit() {
                               placeholder="Kondisi umum, keterangan tambahan, dll."/>
                 </div>
 
-                <!-- ── Foto Bukti ───────────────────────────────────────────── -->
                 <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
                     <div class="flex items-center justify-between mb-3">
                         <h2 class="text-sm font-bold text-slate-700 uppercase tracking-wide">Foto Bukti Pengembalian</h2>
@@ -201,7 +189,6 @@ function submit() {
                     </p>
                 </div>
 
-                <!-- ── Submit ──────────────────────────────────────────────── -->
                 <div class="flex justify-end gap-3">
                     <Link :href="route('borrows.show', borrow.id)"
                           class="px-5 py-2.5 rounded-xl border border-slate-200 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors">

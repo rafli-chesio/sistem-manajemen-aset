@@ -5,10 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-/**
- * Named Return_ to avoid conflict with PHP 8's built-in `return` keyword.
- * Table name is `returns`.
- */
+
 class Return_ extends Model
 {
     use HasFactory;
@@ -45,7 +42,6 @@ class Return_ extends Model
         return $this->hasMany(ReturnImage::class, 'return_id');
     }
 
-    /** Kondisi per-item setelah dikembalikan */
     public function returnItems()
     {
         return $this->hasMany(ReturnItem::class, 'return_id');

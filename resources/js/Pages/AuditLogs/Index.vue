@@ -51,7 +51,6 @@ function formatAction(act) {
             <h1 class="text-slate-800 font-bold text-lg">Log Audit Sistem</h1>
         </template>
 
-        <!-- Filters -->
         <div class="flex flex-col sm:flex-row gap-3 mb-4">
             <div class="relative flex-1">
                 <input v-model="action" type="text" placeholder="Filter aksi (cth. asset.created)..."

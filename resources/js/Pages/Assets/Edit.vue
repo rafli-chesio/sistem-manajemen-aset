@@ -12,7 +12,6 @@ const props = defineProps({
     locations:  { type: Array,  default: () => [] },
 });
 
-// Local reactive copies so new items can be added without reload
 const localCategories = ref([...props.categories]);
 const localLocations  = ref([...props.locations]);
 
@@ -62,7 +61,7 @@ function deleteExistingImage(imageId) {
 
         <div class="max-w-3xl mx-auto">
             <form @submit.prevent="submit" class="space-y-6">
-                <!-- Basic Info -->
+
                 <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
                     <h2 class="text-sm font-bold text-slate-700 uppercase tracking-wide mb-4">Informasi Dasar</h2>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -96,7 +95,7 @@ function deleteExistingImage(imageId) {
                     </div>
                 </div>
 
-                <!-- Classification -->
+
                 <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
                     <h2 class="text-sm font-bold text-slate-700 uppercase tracking-wide mb-4">Klasifikasi</h2>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -113,7 +112,6 @@ function deleteExistingImage(imageId) {
                                 </label>
                             </div>
                         </div>
-                        <!-- Status for UNIQUE -->
                         <div v-if="form.type === 'UNIQUE'">
                             <label class="block text-sm font-medium text-slate-700 mb-1">Status</label>
                             <select v-model="form.status" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-indigo-300 outline-none bg-white">
@@ -122,13 +120,12 @@ function deleteExistingImage(imageId) {
                                 <option value="LOST">Hilang</option>
                             </select>
                         </div>
-                        <!-- Stock for CONSUMABLE -->
                         <div v-if="form.type === 'CONSUMABLE'">
                             <label class="block text-sm font-medium text-slate-700 mb-1">Jumlah Stok</label>
                             <input v-model="form.stock" type="number" min="0" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-indigo-300 outline-none"/>
                             <p v-if="form.errors.stock" class="text-red-500 text-xs mt-1">{{ form.errors.stock }}</p>
                         </div>
-                        <!-- ── Kategori — dengan InlineCreator ───────────────── -->
+
                         <InlineCreator
                             v-model="form.category_id"
                             :items="localCategories"
@@ -139,7 +136,6 @@ function deleteExistingImage(imageId) {
                             @item-created="onCategoryCreated"
                         />
 
-                        <!-- ── Lokasi — dengan InlineCreator ─────────────────── -->
                         <InlineCreator
                             v-model="form.location_id"
                             :items="localLocations"
@@ -156,7 +152,7 @@ function deleteExistingImage(imageId) {
                     </div>
                 </div>
 
-                <!-- Photos -->
+                <!-- Foto -->
                 <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
                     <h2 class="text-sm font-bold text-slate-700 uppercase tracking-wide mb-4">Foto Dokumentasi</h2>
                     <ImageUploader

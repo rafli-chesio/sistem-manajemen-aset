@@ -10,17 +10,14 @@ class Asset extends Model
 {
     use HasFactory, SoftDeletes;
 
-    // Types
     const TYPE_UNIQUE      = 'UNIQUE';
     const TYPE_CONSUMABLE  = 'CONSUMABLE';
 
-    // Statuses (applies to UNIQUE assets)
     const STATUS_AVAILABLE = 'AVAILABLE';
     const STATUS_BORROWED  = 'BORROWED';
     const STATUS_DAMAGED   = 'DAMAGED';
     const STATUS_LOST      = 'LOST';
 
-    // Conditions
     const CONDITION_GOOD    = 'GOOD';
     const CONDITION_FAIR    = 'FAIR';
     const CONDITION_POOR    = 'POOR';

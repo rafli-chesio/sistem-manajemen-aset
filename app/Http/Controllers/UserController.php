@@ -26,7 +26,6 @@ class UserController extends Controller
             ->paginate(15)
             ->withQueryString();
 
-        // Map roles for frontend
         $users->through(fn($u) => array_merge($u->toArray(), [
             'role' => $u->roles->first()?->name,
         ]));

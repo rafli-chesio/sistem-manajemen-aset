@@ -17,7 +17,6 @@ return Application::configure(basePath: dirname(__DIR__))
             \Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets::class,
         ]);
 
-        // Spatie Role & Permission middleware aliases
         $middleware->alias([
             'role'               => \Spatie\Permission\Middleware\RoleMiddleware::class,
             'permission'         => \Spatie\Permission\Middleware\PermissionMiddleware::class,
@@ -25,7 +24,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withSchedule(function (Schedule $schedule) {
-        // Run daily at midnight: expire pending + mark overdue
+
         $schedule->command('borrows:process-schedules')->dailyAt('00:05');
     })
     ->withExceptions(function (Exceptions $exceptions) {

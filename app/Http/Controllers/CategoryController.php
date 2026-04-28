@@ -8,10 +8,7 @@ use Illuminate\Http\Request;
 
 class CategoryController extends Controller
 {
-    /**
-     * Store a newly created category (AJAX/JSON endpoint).
-     * Used by the inline "Tambah Kategori" form on the asset create/edit page.
-     */
+
     public function store(Request $request): JsonResponse
     {
         $this->authorize('category.create');
@@ -31,9 +28,7 @@ class CategoryController extends Controller
         ], 201);
     }
 
-    /**
-     * Delete a category.
-     */
+
     public function destroy(Category $category): JsonResponse
     {
         $this->authorize('category.delete');

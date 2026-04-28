@@ -25,7 +25,6 @@ class BorrowRequestController extends Controller
                 'user', fn($uq) => $uq->where('name', 'like', "%{$s}%")
             ));
 
-        // Kajur only sees own requests
         if ($user->hasRole('kajur')) {
             $query->where('user_id', $user->id);
         }
@@ -62,13 +61,11 @@ class BorrowRequestController extends Controller
             $items      = $request->input('items');
             $borrowDate = today();
 
-            // Cek apakah request mengandung UNIQUE asset
             $hasUnique = collect($items)->contains(function ($item) {
                 $asset = Asset::find($item['asset_id']);
                 return $asset && $asset->isUnique();
             });
 
-            // Tanggal kembali: +7 hari untuk UNIQUE, sama dengan borrow_date untuk CONSUMABLE only
             $returnDate = $hasUnique
                 ? $borrowDate->copy()->addDays(7)
                 : $borrowDate->copy();

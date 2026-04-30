@@ -50,7 +50,13 @@ class BorrowService
                 'items' => collect($items)->pluck('asset_id')->toArray(),
             ]);
 
-            return $request->load(['items.asset', 'user']);
+            $request->load(['items.asset', 'user']);
+
+            // Notify all admins
+            $admins = User::role('super_admin')->get();
+            Notification::send($admins, new \App\Notifications\NewBorrowRequestNotification($request));
+
+            return $request;
         });
     }
 

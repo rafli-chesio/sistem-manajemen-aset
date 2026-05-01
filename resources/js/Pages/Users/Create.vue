@@ -12,9 +12,21 @@ const form = useForm({
     password:   '',
     password_confirmation: '',
     nip:        '',
-    department: '',
+    department: [],
     role:       'kajur',
 });
+
+const newDepartment = ref('');
+function addDepartment() {
+    const val = newDepartment.value.trim();
+    if (val && !form.department.includes(val)) {
+        form.department.push(val);
+    }
+    newDepartment.value = '';
+}
+function removeDepartment(idx) {
+    form.department.splice(idx, 1);
+}
 
 const roleLabels = { super_admin: 'Super Admin', viewer: 'Viewer', kajur: 'Kajur' };
 </script>
@@ -60,9 +72,21 @@ const roleLabels = { super_admin: 'Super Admin', viewer: 'Viewer', kajur: 'Kajur
                             <label class="block text-sm font-medium text-slate-700 mb-1">NIP</label>
                             <input v-model="form.nip" type="text" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-indigo-300 outline-none font-mono"/>
                         </div>
-                        <div>
+                        <div v-if="form.role === 'kajur'">
                             <label class="block text-sm font-medium text-slate-700 mb-1">Departemen / Jurusan</label>
-                            <input v-model="form.department" type="text" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-indigo-300 outline-none"/>
+                            <div class="flex flex-col gap-2">
+                                <div class="flex flex-wrap gap-2">
+                                    <span v-for="(dep, idx) in form.department" :key="idx"
+                                          class="inline-flex items-center gap-1 px-3 py-1 bg-indigo-50 text-indigo-700 text-xs font-semibold rounded-full border border-indigo-100">
+                                        {{ dep }}
+                                        <button type="button" @click="removeDepartment(idx)" class="hover:text-indigo-900 focus:outline-none">
+                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                        </button>
+                                    </span>
+                                </div>
+                                <input v-model="newDepartment" @keydown.enter.prevent="addDepartment" type="text" placeholder="Ketik lalu Enter..."
+                                       class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-indigo-300 outline-none"/>
+                            </div>
                         </div>
                     </div>
 

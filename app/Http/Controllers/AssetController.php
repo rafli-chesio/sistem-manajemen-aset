@@ -29,7 +29,8 @@ class AssetController extends Controller
 
         // RBAC: Kajur only sees their department assets
         if ($isKajur) {
-            $query->where('department', $user->department);
+            $userDepartments = is_array($user->department) ? $user->department : [];
+            $query->whereIn('department', $userDepartments);
         } else {
             // Admin / Viewer can filter by department
             $query->when($request->department, fn($q, $d) => $q->where('department', $d));
@@ -49,10 +50,14 @@ class AssetController extends Controller
             ->paginate(15)
             ->withQueryString();
 
-        // Get list of distinct departments from Users table for Super Admin/Viewer filter
+        // Flatten departments if they are arrays in DB (JSON)
         $departments = \App\Models\User::whereNotNull('department')
-            ->distinct()
-            ->pluck('department');
+            ->pluck('department')
+            ->map(fn($d) => is_array($d) ? $d : (is_string($d) ? json_decode($d, true) ?? [$d] : []))
+            ->flatten()
+            ->filter()
+            ->unique()
+            ->values();
 
         return Inertia::render('Assets/Index', [
             'assets'      => $assets,
@@ -68,8 +73,12 @@ class AssetController extends Controller
         $this->authorize('asset.create');
 
         $departments = \App\Models\User::whereNotNull('department')
-            ->distinct()
-            ->pluck('department');
+            ->pluck('department')
+            ->map(fn($d) => is_array($d) ? $d : (is_string($d) ? json_decode($d, true) ?? [$d] : []))
+            ->flatten()
+            ->filter()
+            ->unique()
+            ->values();
 
         return Inertia::render('Assets/Create', [
             'categories'  => Category::orderBy('name')->get(),
@@ -82,8 +91,16 @@ class AssetController extends Controller
     {
         try {
             $data = $request->except(['images']);
-            if (auth()->user()->hasRole('kajur')) {
-                $data['department'] = auth()->user()->department;
+            $user = auth()->user();
+            if ($user->hasRole('kajur')) {
+                $userDepartments = is_array($user->department) ? $user->department : [];
+                // If Kajur submits a department, ensure it's in their allowed list
+                if (isset($data['department']) && in_array($data['department'], $userDepartments)) {
+                    // Valid
+                } else {
+                    // Force to their first department if not specified or invalid
+                    $data['department'] = $userDepartments[0] ?? null;
+                }
             }
 
             $this->assetService->create(
@@ -118,8 +135,12 @@ class AssetController extends Controller
         $asset->load(['images', 'category', 'location']);
 
         $departments = \App\Models\User::whereNotNull('department')
-            ->distinct()
-            ->pluck('department');
+            ->pluck('department')
+            ->map(fn($d) => is_array($d) ? $d : (is_string($d) ? json_decode($d, true) ?? [$d] : []))
+            ->flatten()
+            ->filter()
+            ->unique()
+            ->values();
 
         return Inertia::render('Assets/Edit', [
             'asset'       => $asset,
@@ -133,8 +154,14 @@ class AssetController extends Controller
     {
         try {
             $data = $request->except(['images']);
-            if (auth()->user()->hasRole('kajur')) {
-                $data['department'] = auth()->user()->department;
+            $user = auth()->user();
+            if ($user->hasRole('kajur')) {
+                $userDepartments = is_array($user->department) ? $user->department : [];
+                if (isset($data['department']) && in_array($data['department'], $userDepartments)) {
+                    // Valid
+                } else {
+                    $data['department'] = $userDepartments[0] ?? null;
+                }
             }
 
             $this->assetService->update(

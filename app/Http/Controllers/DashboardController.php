@@ -56,7 +56,7 @@ class DashboardController extends Controller
 
         $recentBorrows = $borrowsQuery->take($isKajur ? 10 : 5)->get()->map(fn($req) => [
             'id'          => $req->id,
-            'user_name'   => $req->user->name,
+            'user_name'   => $req->user?->name ?? 'Pengguna Dihapus',
             'status'      => $req->status,
             'borrow_date' => $req->borrow_date->format('d/m/Y'),
             'return_date' => $req->return_date->format('d/m/Y'),

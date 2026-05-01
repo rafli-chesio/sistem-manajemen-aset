@@ -6,8 +6,9 @@ import { Head, useForm, usePage } from '@inertiajs/vue3';
 import { ref } from 'vue';
 
 const props = defineProps({
-    categories: { type: Array, default: () => [] },
-    locations:  { type: Array, default: () => [] },
+    categories:  { type: Array, default: () => [] },
+    locations:   { type: Array, default: () => [] },
+    departments: { type: Array, default: () => [] },
 });
 
 // Local reactive copies so we can push new items without page reload
@@ -26,6 +27,7 @@ const form = useForm({
     condition:   'GOOD',
     category_id: '',
     location_id: '',
+    department:  '',
     type:        'UNIQUE',
     status:      'AVAILABLE',   // default; untuk CONSUMABLE selalu AVAILABLE
     stock:       null,
@@ -152,7 +154,16 @@ function submit() {
                             @item-created="onLocationCreated"
                         />
 
-                        <div class="sm:col-span-2">
+                        <!-- Department Field for Super Admin -->
+                        <div v-if="page.props.auth.roles.includes('super_admin')">
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Jurusan / Departemen</label>
+                            <select v-model="form.department" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-indigo-300 outline-none bg-white">
+                                <option value="">— Tidak Spesifik (Umum) —</option>
+                                <option v-for="d in props.departments" :key="d" :value="d">{{ d }}</option>
+                            </select>
+                        </div>
+
+                        <div class="sm:col-span-2 mt-2">
                             <label class="block text-sm font-medium text-slate-700 mb-1">Keterangan</label>
                             <textarea v-model="form.description" rows="3" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-indigo-300 outline-none resize-none" placeholder="Deskripsi tambahan..."/>
                         </div>

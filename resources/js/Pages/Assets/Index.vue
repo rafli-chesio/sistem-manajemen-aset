@@ -8,37 +8,41 @@ import { ref, watch } from 'vue';
 import { debounce } from 'lodash-es';
 
 const props = defineProps({
-    assets:     { type: Object, required: true },
-    categories: { type: Array,  default: () => [] },
-    locations:  { type: Array,  default: () => [] },
-    filters:    { type: Object, default: () => ({}) },
+    assets:      { type: Object, required: true },
+    categories:  { type: Array,  default: () => [] },
+    locations:   { type: Array,  default: () => [] },
+    departments: { type: Array,  default: () => [] },
+    filters:     { type: Object, default: () => ({}) },
 });
 
 const page      = usePage();
 const canCreate = page.props.auth.permissions.includes('asset.create');
 const canEdit   = page.props.auth.permissions.includes('asset.edit');
 const canDelete = page.props.auth.permissions.includes('asset.delete');
+const isKajur   = page.props.auth.roles.includes('kajur');
 
-const search   = ref(props.filters.search ?? '');
-const type     = ref(props.filters.type ?? '');
-const status   = ref(props.filters.status ?? '');
-const category = ref(props.filters.category ?? '');
-const location = ref(props.filters.location ?? '');
+const search     = ref(props.filters.search ?? '');
+const type       = ref(props.filters.type ?? '');
+const status     = ref(props.filters.status ?? '');
+const category   = ref(props.filters.category ?? '');
+const location   = ref(props.filters.location ?? '');
+const department = ref(props.filters.department ?? '');
 
 const deleteTarget  = ref(null);
 const deleteLoading = ref(false);
 
 const applyFilters = debounce(() => {
     router.get(route('assets.index'), {
-        search: search.value || undefined,
-        type:   type.value   || undefined,
-        status: status.value || undefined,
-        category: category.value || undefined,
-        location: location.value || undefined,
+        search:     search.value || undefined,
+        type:       type.value   || undefined,
+        status:     status.value || undefined,
+        category:   category.value || undefined,
+        location:   location.value || undefined,
+        department: department.value || undefined,
     }, { preserveState: true, replace: true });
 }, 350);
 
-watch([search, type, status, category, location], applyFilters);
+watch([search, type, status, category, location, department], applyFilters);
 
 function confirmDelete(asset) { deleteTarget.value = asset; }
 function cancelDelete()       { deleteTarget.value = null; }
@@ -83,6 +87,10 @@ async function doDelete() {
                     <option value="">Semua Kategori</option>
                     <option v-for="c in categories" :key="c.id" :value="c.id">{{ c.name }}</option>
                 </select>
+                <select v-if="!isKajur" v-model="department" class="px-3 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-indigo-300 outline-none bg-white">
+                    <option value="">Semua Jurusan</option>
+                    <option v-for="d in departments" :key="d" :value="d">{{ d }}</option>
+                </select>
             </div>
             <Link v-if="canCreate" :href="route('assets.create')"
                   class="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 transition-colors shadow-sm whitespace-nowrap">
@@ -105,12 +113,13 @@ async function doDelete() {
                             <th class="px-4 py-3">Status / Stok</th>
                             <th class="px-4 py-3">Kategori</th>
                             <th class="px-4 py-3">Lokasi</th>
+                            <th v-if="!isKajur" class="px-4 py-3">Jurusan</th>
                             <th class="px-4 py-3">Aksi</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100">
                         <tr v-if="!assets.data?.length">
-                            <td colspan="8" class="px-4 py-10 text-center text-slate-400">Tidak ada aset ditemukan.</td>
+                            <td :colspan="isKajur ? 8 : 9" class="px-4 py-10 text-center text-slate-400">Tidak ada aset ditemukan.</td>
                         </tr>
                         <tr v-for="asset in assets.data" :key="asset.id" class="hover:bg-slate-50 transition-colors">
                             <td class="px-4 py-3">
@@ -141,6 +150,7 @@ async function doDelete() {
                             </td>
                             <td class="px-4 py-3 text-slate-600">{{ asset.category?.name ?? '—' }}</td>
                             <td class="px-4 py-3 text-slate-600">{{ asset.location?.name ?? '—' }}</td>
+                            <td v-if="!isKajur" class="px-4 py-3 text-slate-600">{{ asset.department ?? '—' }}</td>
                             <td class="px-4 py-3">
                                 <div class="flex items-center gap-2">
                                     <Link :href="route('assets.show', asset.id)"

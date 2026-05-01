@@ -22,10 +22,25 @@ class AssetController extends Controller
     {
         $this->authorize('asset.view');
 
-        $assets = Asset::with(['category', 'location', 'images'])
-            ->when($request->search, fn($q, $s) => $q->where('name', 'like', "%{$s}%")
-                ->orWhere('asset_code', 'like', "%{$s}%")
-                ->orWhere('brand', 'like', "%{$s}%"))
+        $user = auth()->user();
+        $isKajur = $user->hasRole('kajur');
+
+        $query = Asset::with(['category', 'location', 'images']);
+
+        // RBAC: Kajur only sees their department assets
+        if ($isKajur) {
+            $query->where('department', $user->department);
+        } else {
+            // Admin / Viewer can filter by department
+            $query->when($request->department, fn($q, $d) => $q->where('department', $d));
+        }
+
+        $assets = $query
+            ->when($request->search, fn($q, $s) => $q->where(function($query) use ($s) {
+                $query->where('name', 'like', "%{$s}%")
+                      ->orWhere('asset_code', 'like', "%{$s}%")
+                      ->orWhere('brand', 'like', "%{$s}%");
+            }))
             ->when($request->type,     fn($q, $t) => $q->where('type', $t))
             ->when($request->status,   fn($q, $s) => $q->where('status', $s))
             ->when($request->category, fn($q, $c) => $q->where('category_id', $c))
@@ -34,11 +49,17 @@ class AssetController extends Controller
             ->paginate(15)
             ->withQueryString();
 
+        // Get list of distinct departments from Users table for Super Admin/Viewer filter
+        $departments = \App\Models\User::whereNotNull('department')
+            ->distinct()
+            ->pluck('department');
+
         return Inertia::render('Assets/Index', [
-            'assets'     => $assets,
-            'categories' => Category::orderBy('name')->get(),
-            'locations'  => Location::orderBy('name')->get(),
-            'filters'    => $request->only(['search', 'type', 'status', 'category', 'location']),
+            'assets'      => $assets,
+            'categories'  => Category::orderBy('name')->get(),
+            'locations'   => Location::orderBy('name')->get(),
+            'departments' => $departments,
+            'filters'     => $request->only(['search', 'type', 'status', 'category', 'location', 'department']),
         ]);
     }
 
@@ -46,17 +67,27 @@ class AssetController extends Controller
     {
         $this->authorize('asset.create');
 
+        $departments = \App\Models\User::whereNotNull('department')
+            ->distinct()
+            ->pluck('department');
+
         return Inertia::render('Assets/Create', [
-            'categories' => Category::orderBy('name')->get(),
-            'locations'  => Location::orderBy('name')->get(),
+            'categories'  => Category::orderBy('name')->get(),
+            'locations'   => Location::orderBy('name')->get(),
+            'departments' => $departments,
         ]);
     }
 
     public function store(StoreAssetRequest $request): RedirectResponse
     {
         try {
+            $data = $request->except(['images']);
+            if (auth()->user()->hasRole('kajur')) {
+                $data['department'] = auth()->user()->department;
+            }
+
             $this->assetService->create(
-                $request->except(['images']),
+                $data,
                 $request->file('images', [])
             );
 
@@ -86,19 +117,29 @@ class AssetController extends Controller
 
         $asset->load(['images', 'category', 'location']);
 
+        $departments = \App\Models\User::whereNotNull('department')
+            ->distinct()
+            ->pluck('department');
+
         return Inertia::render('Assets/Edit', [
-            'asset'      => $asset,
-            'categories' => Category::orderBy('name')->get(),
-            'locations'  => Location::orderBy('name')->get(),
+            'asset'       => $asset,
+            'categories'  => Category::orderBy('name')->get(),
+            'locations'   => Location::orderBy('name')->get(),
+            'departments' => $departments,
         ]);
     }
 
     public function update(UpdateAssetRequest $request, Asset $asset): RedirectResponse
     {
         try {
+            $data = $request->except(['images']);
+            if (auth()->user()->hasRole('kajur')) {
+                $data['department'] = auth()->user()->department;
+            }
+
             $this->assetService->update(
                 $asset,
-                $request->except(['images']),
+                $data,
                 $request->file('images', [])
             );
 

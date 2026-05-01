@@ -7,9 +7,10 @@ import { Head, useForm, router, usePage } from '@inertiajs/vue3';
 import { ref } from 'vue';
 
 const props = defineProps({
-    asset:      { type: Object, required: true },
-    categories: { type: Array,  default: () => [] },
-    locations:  { type: Array,  default: () => [] },
+    asset:       { type: Object, required: true },
+    categories:  { type: Array,  default: () => [] },
+    locations:   { type: Array,  default: () => [] },
+    departments: { type: Array,  default: () => [] },
 });
 
 const localCategories = ref([...props.categories]);
@@ -26,6 +27,7 @@ const form = useForm({
     condition:   props.asset.condition,
     category_id: props.asset.category_id ?? '',
     location_id: props.asset.location_id ?? '',
+    department:  props.asset.department ?? '',
     type:        props.asset.type,
     stock:       props.asset.stock,
     status:      props.asset.status ?? 'AVAILABLE',
@@ -145,7 +147,17 @@ function deleteExistingImage(imageId) {
                             :can-create="canManage"
                             @item-created="onLocationCreated"
                         />
-                        <div class="sm:col-span-2">
+
+                        <!-- Department Field for Super Admin -->
+                        <div v-if="page.props.auth.roles.includes('super_admin')">
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Jurusan / Departemen</label>
+                            <select v-model="form.department" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-indigo-300 outline-none bg-white">
+                                <option value="">— Tidak Spesifik (Umum) —</option>
+                                <option v-for="d in props.departments" :key="d" :value="d">{{ d }}</option>
+                            </select>
+                        </div>
+
+                        <div class="sm:col-span-2 mt-2">
                             <label class="block text-sm font-medium text-slate-700 mb-1">Keterangan</label>
                             <textarea v-model="form.description" rows="3" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-indigo-300 outline-none resize-none"/>
                         </div>

@@ -9,6 +9,7 @@ const props = defineProps({
     borrowsByStatus:   { type: Object, default: () => ({}) },
     borrowTrend:       { type: Array,  default: () => [] },
     topAssets:         { type: Array,  default: () => [] },
+    metrics:           { type: Object, default: () => ({}) },
 });
 
 const conditionColors = {
@@ -28,11 +29,11 @@ const statusColors = {
 
 const conditionEntries  = Object.entries(props.assetsByCondition);
 const statusEntries     = Object.entries(props.borrowsByStatus);
-const totalAssets  = conditionEntries.reduce((s, [, v]) => s + Number(v), 0);
-const totalBorrows = statusEntries.reduce((s, [, v]) => s + Number(v), 0);
 
-const borrowedAssetsCount = Number(props.borrowsByStatus['APPROVED'] || 0) + Number(props.borrowsByStatus['OVERDUE'] || 0);
-const damagedAssetsCount = Number(props.assetsByCondition['POOR'] || 0) + Number(props.assetsByCondition['DAMAGED'] || 0);
+const totalAssets         = computed(() => props.metrics?.total_assets || 0);
+const totalBorrows        = computed(() => props.metrics?.total_transactions || 0);
+const borrowedAssetsCount = computed(() => props.metrics?.borrowed_assets || 0);
+const damagedAssetsCount  = computed(() => props.metrics?.damaged_assets || 0);
 
 const conditionLabels = { GOOD: 'Baik', FAIR: 'Cukup', POOR: 'Buruk', DAMAGED: 'Rusak' };
 const statusLabels    = { PENDING: 'Menunggu', APPROVED: 'Disetujui', REJECTED: 'Ditolak', OVERDUE: 'Terlambat', RETURNED: 'Dikembalikan' };

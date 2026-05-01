@@ -19,16 +19,16 @@ const isKajur      = computed(() => roles.value.includes('kajur'));
 const isViewer     = computed(() => roles.value.includes('viewer'));
 
 const adminCards = [
-    { label: 'Total Aset',      key: 'total_assets',     color: 'bg-gradient-to-br from-indigo-500 to-indigo-600', text: 'text-indigo-100', icon: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4' },
-    { label: 'Tersedia',        key: 'available_assets', color: 'bg-gradient-to-br from-emerald-400 to-emerald-500', text: 'text-emerald-50', icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' },
-    { label: 'Menunggu Persetujuan', key: 'pending_borrows', color: 'bg-gradient-to-br from-amber-400 to-amber-500', text: 'text-amber-50', icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z' },
-    { label: 'Terlambat',       key: 'overdue_borrows',  color: 'bg-gradient-to-br from-rose-400 to-rose-500', text: 'text-rose-50', icon: 'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z' },
+    { label: 'Total Aset',      key: 'total_assets',     iconColor: 'text-blue-500', iconBg: 'bg-blue-50', icon: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4' },
+    { label: 'Tersedia',        key: 'available_assets', iconColor: 'text-emerald-500', iconBg: 'bg-emerald-50', icon: 'M5 13l4 4L19 7' },
+    { label: 'Menunggu Persetujuan', key: 'pending_borrows', iconColor: 'text-amber-500', iconBg: 'bg-amber-50', icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z' },
+    { label: 'Terlambat',       key: 'overdue_borrows',  iconColor: 'text-rose-500', iconBg: 'bg-rose-50', icon: 'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z' },
 ];
 
 const kajurCards = [
-    { label: 'Menunggu Persetujuan', key: 'my_pending', color: 'bg-gradient-to-br from-amber-400 to-amber-500', text: 'text-amber-50', icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z' },
-    { label: 'Disetujui',            key: 'my_approved',color: 'bg-gradient-to-br from-emerald-400 to-emerald-500', text: 'text-emerald-50', icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' },
-    { label: 'Ditolak',              key: 'my_rejected',color: 'bg-gradient-to-br from-rose-400 to-rose-500', text: 'text-rose-50', icon: 'M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z' },
+    { label: 'Menunggu Persetujuan', key: 'my_pending', iconColor: 'text-amber-500', iconBg: 'bg-amber-50', icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z' },
+    { label: 'Disetujui',            key: 'my_approved',iconColor: 'text-emerald-500', iconBg: 'bg-emerald-50', icon: 'M5 13l4 4L19 7' },
+    { label: 'Ditolak',              key: 'my_rejected',iconColor: 'text-rose-500', iconBg: 'bg-rose-50', icon: 'M6 18L18 6M6 6l12 12' },
 ];
 
 const currentCards = computed(() => (isSuperAdmin.value || isViewer.value) ? adminCards : kajurCards);
@@ -65,25 +65,21 @@ const dates = Array.from({length: 31}, (_, i) => i + 1);
                 <h2 class="text-lg font-bold text-slate-800 tracking-tight">Ringkasan</h2>
             </div>
             
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-5">
                 <div v-for="card in currentCards" :key="card.key"
-                     class="rounded-[20px] p-6 flex flex-col shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative overflow-hidden group hover:-translate-y-1 transition-all duration-300"
-                     :class="card.color">
+                     class="bg-white border border-slate-100 rounded-2xl p-5 flex flex-col shadow-sm relative overflow-hidden group hover:-translate-y-1 transition-all duration-300">
                     
-                    <div class="z-10 flex items-start justify-between">
-                        <div>
-                            <p class="text-sm font-medium opacity-90 mb-1 text-white">{{ card.label }}</p>
-                            <p class="text-3xl font-bold text-white tracking-tight">{{ stats[card.key] ?? 0 }}</p>
+                    <div class="flex items-start justify-between gap-3">
+                        <div class="min-w-0 flex-1">
+                            <p class="text-[10px] sm:text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1.5 leading-snug">{{ card.label }}</p>
+                            <p class="text-2xl sm:text-3xl font-extrabold text-gray-800 tracking-tight">{{ stats[card.key] ?? 0 }}</p>
                         </div>
-                        <div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center backdrop-blur-sm">
-                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div class="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" :class="card.iconBg">
+                            <svg class="w-5 h-5" :class="card.iconColor" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="card.icon"/>
                             </svg>
                         </div>
                     </div>
-
-                    <!-- Decorative background blur -->
-                    <div class="absolute -right-6 -bottom-6 w-24 h-24 bg-white/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-500"></div>
                 </div>
             </div>
         </div>

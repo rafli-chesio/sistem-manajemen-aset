@@ -76,7 +76,7 @@ function doDelete() {
                         <tr class="bg-slate-50 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">
                             <th class="px-6 py-3">Pengguna</th>
                             <th class="px-6 py-3">NIP</th>
-                            <th class="px-6 py-3">Departemen</th>
+                            <th class="px-6 py-3">Jurusan</th>
                             <th class="px-6 py-3">Peran</th>
                             <th class="px-6 py-3">Dibuat</th>
                             <th class="px-6 py-3">Aksi</th>
@@ -99,7 +99,15 @@ function doDelete() {
                                 </div>
                             </td>
                             <td class="px-6 py-4 font-mono text-xs text-slate-500">{{ u.nip ?? '—' }}</td>
-                            <td class="px-6 py-4 text-slate-600">{{ u.department ?? '—' }}</td>
+                            <td class="px-6 py-4">
+                                <div v-if="Array.isArray(u.department) && u.department.length" class="flex flex-wrap gap-1">
+                                    <span v-for="d in u.department" :key="d" class="px-2 py-0.5 bg-slate-100 text-slate-600 rounded-md text-[11px] font-semibold border border-slate-200">
+                                        {{ d }}
+                                    </span>
+                                </div>
+                                <span v-else-if="typeof u.department === 'string' && u.department && u.department !== '[]'" class="text-slate-600 text-xs">{{ u.department }}</span>
+                                <span v-else class="text-slate-400 text-xs">—</span>
+                            </td>
                             <td class="px-6 py-4">
                                 <span v-if="u.roles?.[0]"
                                       class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold ring-1 ring-inset"

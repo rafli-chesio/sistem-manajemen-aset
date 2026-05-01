@@ -51,12 +51,20 @@ class ReportController extends Controller
                 'count' => $a->borrow_items_count,
             ]);
 
+        $metrics = [
+            'total_assets'       => Asset::count(),
+            'borrowed_assets'    => Asset::where('status', 'BORROWED')->count(),
+            'damaged_assets'     => Asset::where('status', 'DAMAGED')->orWhereIn('condition', ['POOR', 'DAMAGED'])->count(),
+            'total_transactions' => BorrowRequest::count(),
+        ];
+
         return Inertia::render('Reports/Index', [
             'assetsByCategory'  => $assetsByCategory,
             'assetsByCondition' => $assetsByCondition,
             'borrowsByStatus'   => $borrowsByStatus,
             'borrowTrend'       => $borrowTrend,
             'topAssets'         => $topAssets,
+            'metrics'           => $metrics,
         ]);
     }
 }

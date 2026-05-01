@@ -28,36 +28,40 @@ return new class extends Migration
             DB::statement("UPDATE assets SET stock = 0 WHERE type = 'CONSUMABLE' AND stock IS NULL");
         }
 
-        // 1. stock cannot be negative
-        DB::statement("
-            ALTER TABLE assets
-            ADD CONSTRAINT chk_stock_non_negative
-            CHECK (stock IS NULL OR stock >= 0)
-        ");
+        if (DB::getDriverName() !== 'sqlite') {
+            // 1. stock cannot be negative
+            DB::statement("
+                ALTER TABLE assets
+                ADD CONSTRAINT chk_stock_non_negative
+                CHECK (stock IS NULL OR stock >= 0)
+            ");
 
-        // 2. return_date must not be before borrow_date
-        DB::statement("
-            ALTER TABLE borrow_requests
-            ADD CONSTRAINT chk_valid_date_range
-            CHECK (return_date >= borrow_date)
-        ");
+            // 2. return_date must not be before borrow_date
+            DB::statement("
+                ALTER TABLE borrow_requests
+                ADD CONSTRAINT chk_valid_date_range
+                CHECK (return_date >= borrow_date)
+            ");
 
-        // 3. Asset type consistency: UNIQUE → stock IS NULL, CONSUMABLE → stock IS NOT NULL
-        DB::statement("
-            ALTER TABLE assets
-            ADD CONSTRAINT chk_asset_type_stock_consistency
-            CHECK (
-                (type = 'UNIQUE'     AND stock IS NULL)
-                OR
-                (type = 'CONSUMABLE' AND stock IS NOT NULL AND stock >= 0)
-            )
-        ");
+            // 3. Asset type consistency: UNIQUE → stock IS NULL, CONSUMABLE → stock IS NOT NULL
+            DB::statement("
+                ALTER TABLE assets
+                ADD CONSTRAINT chk_asset_type_stock_consistency
+                CHECK (
+                    (type = 'UNIQUE'     AND stock IS NULL)
+                    OR
+                    (type = 'CONSUMABLE' AND stock IS NOT NULL AND stock >= 0)
+                )
+            ");
+        }
     }
 
     public function down(): void
     {
-        DB::statement('ALTER TABLE assets DROP CONSTRAINT IF EXISTS chk_stock_non_negative');
-        DB::statement('ALTER TABLE borrow_requests DROP CONSTRAINT IF EXISTS chk_valid_date_range');
-        DB::statement('ALTER TABLE assets DROP CONSTRAINT IF EXISTS chk_asset_type_stock_consistency');
+        if (DB::getDriverName() !== 'sqlite') {
+            DB::statement('ALTER TABLE assets DROP CONSTRAINT IF EXISTS chk_stock_non_negative');
+            DB::statement('ALTER TABLE borrow_requests DROP CONSTRAINT IF EXISTS chk_valid_date_range');
+            DB::statement('ALTER TABLE assets DROP CONSTRAINT IF EXISTS chk_asset_type_stock_consistency');
+        }
     }
 };

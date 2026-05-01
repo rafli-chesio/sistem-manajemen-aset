@@ -30,6 +30,7 @@ class Asset extends Model
         'condition',
         'category_id',
         'location_id',
+        'department',
         'type',
         'stock',
         'status',

@@ -1,9 +1,8 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import ImageUploader from '@/Components/ImageUploader.vue';
 import StatusBadge from '@/Components/StatusBadge.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
-import { computed } from 'vue';
+import { computed, ref, onBeforeUnmount } from 'vue';
 
 const props = defineProps({
     borrow: { type: Object, required: true },
@@ -16,7 +15,7 @@ const uniqueItems = computed(() =>
 const form = useForm({
     item_conditions: uniqueItems.value.map(item => ({
         borrow_item_id:  item.id,
-        condition_after: item.condition_before ?? 'GOOD', // default = kondisi saat dipinjam
+        condition_after: item.condition_before ?? 'GOOD',
         notes:           '',
     })),
     notes:  '',
@@ -24,10 +23,10 @@ const form = useForm({
 });
 
 const conditionOptions = [
-    { val: 'GOOD',    label: 'Baik',  color: 'emerald', icon: '✓' },
-    { val: 'FAIR',    label: 'Cukup', color: 'yellow',  icon: '~' },
-    { val: 'POOR',    label: 'Buruk', color: 'orange',  icon: '!' },
-    { val: 'DAMAGED', label: 'Rusak', color: 'red',     icon: '✕' },
+    { val: 'GOOD',    label: 'Baik',   color: 'emerald', icon: '✓' },
+    { val: 'FAIR',    label: 'Cukup',  color: 'yellow',  icon: '~' },
+    { val: 'POOR',    label: 'Buruk',  color: 'orange',  icon: '!' },
+    { val: 'DAMAGED', label: 'Rusak',  color: 'red',     icon: '✕' },
 ];
 
 function getConditionEntry(borrowItemId) {
@@ -35,10 +34,10 @@ function getConditionEntry(borrowItemId) {
 }
 
 const colorClasses = {
-    emerald: { active: 'border-emerald-500 bg-emerald-50 text-emerald-700', idle: 'border-slate-200 text-slate-500 hover:border-emerald-300' },
-    yellow:  { active: 'border-yellow-500 bg-yellow-50 text-yellow-700',   idle: 'border-slate-200 text-slate-500 hover:border-yellow-300' },
-    orange:  { active: 'border-orange-500 bg-orange-50 text-orange-700',   idle: 'border-slate-200 text-slate-500 hover:border-orange-300' },
-    red:     { active: 'border-red-500 bg-red-50 text-red-700',            idle: 'border-slate-200 text-slate-500 hover:border-red-300' },
+    emerald: { active: 'border-emerald-500 bg-emerald-50 text-emerald-700 shadow-sm', idle: 'border-slate-200 bg-white text-slate-500 hover:border-emerald-300 hover:bg-emerald-50/50' },
+    yellow:  { active: 'border-yellow-500 bg-yellow-50 text-yellow-700 shadow-sm',   idle: 'border-slate-200 bg-white text-slate-500 hover:border-yellow-300 hover:bg-yellow-50/50' },
+    orange:  { active: 'border-orange-500 bg-orange-50 text-orange-700 shadow-sm',   idle: 'border-slate-200 bg-white text-slate-500 hover:border-orange-300 hover:bg-orange-50/50' },
+    red:     { active: 'border-red-500 bg-red-50 text-red-700 shadow-sm',            idle: 'border-slate-200 bg-white text-slate-500 hover:border-red-300 hover:bg-red-50/50' },
 };
 
 function conditionClass(entry, opt) {
@@ -51,6 +50,42 @@ function formatDate(raw) {
     return new Date(raw).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
 }
 
+// Dropzone Logic
+const isDragging = ref(false);
+const fileInput = ref(null);
+const previews = ref([]);
+
+function handleDrop(e) {
+    isDragging.value = false;
+    addFiles(e.dataTransfer.files);
+}
+function handleFileSelect(e) {
+    addFiles(e.target.files);
+}
+function addFiles(files) {
+    for (let i = 0; i < files.length; i++) {
+        if (files[i].type.startsWith('image/')) {
+            form.images.push(files[i]);
+            previews.value.push({
+                file: files[i],
+                url: URL.createObjectURL(files[i])
+            });
+        }
+    }
+    // reset input
+    if (fileInput.value) fileInput.value.value = '';
+}
+function removeImage(idx) {
+    URL.revokeObjectURL(previews.value[idx].url);
+    previews.value.splice(idx, 1);
+    form.images.splice(idx, 1);
+}
+
+// Cleanup URLs
+onBeforeUnmount(() => {
+    previews.value.forEach(p => URL.revokeObjectURL(p.url));
+});
+
 function submit() {
     form.post(route('returns.store', props.borrow.id), {
         forceFormData: true,
@@ -59,150 +94,166 @@ function submit() {
 </script>
 
 <template>
-    <Head :title="`Pengembalian - Peminjaman #${borrow.id}`"/>
+    <Head :title="`Pengembalian #${borrow.id}`"/>
     <AuthenticatedLayout>
         <template #header>
-            <div class="flex items-center gap-2">
-                <Link :href="route('borrows.show', borrow.id)" class="text-slate-400 hover:text-slate-600">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+            <div class="flex items-center gap-3">
+                <Link :href="route('borrows.show', borrow.id)" class="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/>
                     </svg>
                 </Link>
-                <h1 class="text-slate-800 font-bold text-lg">Proses Pengembalian #{{ borrow.id }}</h1>
+                <h1 class="text-slate-800 font-bold text-xl">Formulir Pengembalian</h1>
+                
+                <!-- Pills -->
+                <div class="ml-2 flex items-center gap-2">
+                    <span class="px-3 py-1 bg-indigo-50 text-indigo-700 text-xs font-bold uppercase tracking-wider rounded-full border border-indigo-100">
+                        ID: #{{ borrow.id }}
+                    </span>
+                    <span class="px-3 py-1 bg-slate-100 text-slate-600 text-xs font-semibold rounded-full border border-slate-200">
+                        Dipinjam: {{ formatDate(borrow.borrow_date) }}
+                    </span>
+                </div>
             </div>
         </template>
 
-        <div class="max-w-2xl mx-auto space-y-5">
+        <div class="max-w-3xl mx-auto space-y-6 pb-12">
 
-            <div class="bg-amber-50 border border-amber-200 rounded-2xl px-5 py-4 flex gap-3">
-                <svg class="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-                </svg>
+            <form @submit.prevent="submit" class="space-y-8">
+                
+                <!-- 1. Kondisi Barang (Cards) -->
                 <div>
-                    <p class="text-sm font-semibold text-amber-800">Isi kondisi setiap barang secara terpisah</p>
-                    <p class="text-xs text-amber-700 mt-0.5">
-                        Pengembalian dilakukan sekaligus untuk semua barang unik.
-                        Batas kembali: <strong>{{ formatDate(borrow.return_date) }}</strong>.
-                        Minimal 1 foto wajib diunggah.
-                    </p>
-                </div>
-            </div>
+                    <div class="mb-4">
+                        <h2 class="text-base font-bold text-slate-800">Evaluasi Kondisi Barang</h2>
+                        <p class="text-sm text-slate-500">Nilai kondisi akhir dari setiap barang unik yang Anda kembalikan.</p>
+                    </div>
 
-            <form @submit.prevent="submit" class="space-y-5">
+                    <div class="space-y-4">
+                        <div v-for="(item, idx) in uniqueItems" :key="item.id"
+                             class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
+                            
+                            <!-- Header Item -->
+                            <div class="px-6 py-4 border-b border-slate-100 flex items-center gap-4 bg-slate-50/50">
+                                <div class="w-12 h-12 rounded-xl bg-slate-200 overflow-hidden flex-shrink-0">
+                                    <img v-if="item.asset?.images?.length" :src="'/storage/' + item.asset.images[0].path" class="w-full h-full object-cover"/>
+                                    <div v-else class="w-full h-full flex items-center justify-center text-slate-400">
+                                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                    </div>
+                                </div>
+                                <div class="flex-1">
+                                    <h3 class="font-bold text-slate-800 text-lg leading-tight">{{ item.asset?.name }} <span class="text-sm font-medium text-slate-400 ml-1">× 1</span></h3>
+                                    <p class="text-xs text-slate-500 mt-1 flex items-center gap-1.5">
+                                        Kondisi saat dipinjam: <StatusBadge :status="item.condition_before" class="scale-90 origin-left" />
+                                    </p>
+                                </div>
+                            </div>
 
-                <div v-for="(item, idx) in uniqueItems" :key="item.id"
-                     class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                            <!-- Body Evaluasi -->
+                            <div class="p-6 space-y-5">
+                                <div>
+                                    <label class="block text-sm font-bold text-slate-700 mb-3">Kondisi Saat Ini <span class="text-red-500">*</span></label>
+                                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                                        <label v-for="opt in conditionOptions" :key="opt.val"
+                                               class="flex flex-col items-center justify-center gap-1.5 py-3 rounded-2xl border-2 cursor-pointer transition-all"
+                                               :class="conditionClass(getConditionEntry(item.id), opt)">
+                                            <input type="radio" v-model="getConditionEntry(item.id).condition_after" :value="opt.val" class="hidden"/>
+                                            <span class="text-lg font-black">{{ opt.icon }}</span>
+                                            <span class="text-sm font-bold">{{ opt.label }}</span>
+                                        </label>
+                                    </div>
+                                    <p v-if="form.errors[`item_conditions.${idx}.condition_after`]" class="text-red-500 text-xs mt-2">{{ form.errors[`item_conditions.${idx}.condition_after`] }}</p>
+                                </div>
 
-                    <div class="flex items-center gap-4 px-6 py-4 border-b border-slate-100">
-                        <div class="w-12 h-12 rounded-xl bg-slate-100 overflow-hidden flex-shrink-0">
-                            <img v-if="item.asset?.images?.length"
-                                 :src="'/storage/' + item.asset.images[0].path"
-                                 class="w-full h-full object-cover"/>
-                            <div v-else class="w-full h-full flex items-center justify-center text-slate-300">
-                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                                </svg>
+                                <!-- Change indicator -->
+                                <div v-if="getConditionEntry(item.id) && item.condition_before && getConditionEntry(item.id).condition_after !== item.condition_before"
+                                     class="flex items-center gap-2 p-3 rounded-xl"
+                                     :class="['DAMAGED','POOR'].includes(getConditionEntry(item.id).condition_after) && !['DAMAGED','POOR'].includes(item.condition_before) ? 'bg-red-50 border border-red-100' : 'bg-emerald-50 border border-emerald-100'">
+                                    <span class="text-xs font-semibold" :class="['DAMAGED','POOR'].includes(getConditionEntry(item.id).condition_after) && !['DAMAGED','POOR'].includes(item.condition_before) ? 'text-red-700' : 'text-emerald-700'">
+                                        {{ ['DAMAGED','POOR'].includes(getConditionEntry(item.id).condition_after) && !['DAMAGED','POOR'].includes(item.condition_before) ? '⚠ Perhatian: Kondisi barang menurun.' : '✨ Kondisi barang berubah.' }}
+                                    </span>
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-bold text-slate-700 mb-2">Catatan Kerusakan / Keterangan (Opsional)</label>
+                                    <textarea v-model="getConditionEntry(item.id).notes" rows="2"
+                                              class="w-full px-4 py-3 rounded-2xl border border-slate-200 text-sm focus:ring-2 focus:ring-indigo-300 outline-none resize-none bg-slate-50 focus:bg-white transition-colors"
+                                              placeholder="Tuliskan detail jika ada kerusakan..."/>
+                                </div>
                             </div>
                         </div>
-                        <div class="flex-1 min-w-0">
-                            <p class="font-bold text-slate-800 truncate">{{ item.asset?.name }}</p>
-                            <p class="text-xs font-mono text-slate-400">{{ item.asset?.asset_code }}</p>
-                        </div>
-
-                        <div class="text-right">
-                            <p class="text-xs text-slate-400 mb-1">Kondisi sebelum</p>
-                            <StatusBadge v-if="item.condition_before" :status="item.condition_before"/>
-                        </div>
                     </div>
-
-                    <div class="px-6 py-4 space-y-3">
-                        <label class="block text-sm font-semibold text-slate-700">
-                            Kondisi Saat Dikembalikan
-                            <span class="text-red-500">*</span>
-                            <span class="ml-2 text-xs font-normal text-slate-400">
-                                → akan digunakan untuk memperbarui status aset
-                            </span>
-                        </label>
-
-                        <div class="grid grid-cols-4 gap-2">
-                            <label v-for="opt in conditionOptions" :key="opt.val"
-                                   class="flex flex-col items-center justify-center gap-1 py-2.5 rounded-xl border-2 cursor-pointer text-sm font-semibold transition-all"
-                                   :class="conditionClass(getConditionEntry(item.id), opt)">
-                                <input type="radio"
-                                       v-model="getConditionEntry(item.id).condition_after"
-                                       :value="opt.val"
-                                       class="hidden"/>
-                                <span class="text-base">{{ opt.icon }}</span>
-                                <span>{{ opt.label }}</span>
-                            </label>
-                        </div>
-
-                        <div v-if="getConditionEntry(item.id) && item.condition_before"
-                             class="flex items-center gap-2 text-xs">
-                            <span class="text-slate-500">Perubahan:</span>
-                            <StatusBadge :status="item.condition_before"/>
-                            <svg class="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                            </svg>
-                            <StatusBadge :status="getConditionEntry(item.id).condition_after"/>
-                            <span v-if="getConditionEntry(item.id).condition_after !== item.condition_before"
-                                  class="ml-1 px-1.5 py-0.5 rounded text-xs font-medium"
-                                  :class="['DAMAGED','POOR'].includes(getConditionEntry(item.id).condition_after)
-                                      && !['DAMAGED','POOR'].includes(item.condition_before)
-                                      ? 'bg-red-100 text-red-600' : 'bg-emerald-100 text-emerald-600'">
-                                {{ ['DAMAGED','POOR'].includes(getConditionEntry(item.id).condition_after)
-                                   && !['DAMAGED','POOR'].includes(item.condition_before)
-                                   ? '⚠ Kondisi menurun' : '↑ Berubah' }}
-                            </span>
-                        </div>
-
-                        <textarea v-model="getConditionEntry(item.id).notes"
-                                  rows="2"
-                                  class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-indigo-300 outline-none resize-none"
-                                  :placeholder="`Catatan khusus untuk ${item.asset?.name} (opsional)...`"/>
-                    </div>
-
-                    <p v-if="form.errors[`item_conditions.${idx}.condition_after`]"
-                       class="px-6 pb-3 text-red-500 text-xs">
-                        {{ form.errors[`item_conditions.${idx}.condition_after`] }}
-                    </p>
                 </div>
 
-                <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
-                    <label class="block text-sm font-semibold text-slate-700 mb-2">Catatan Umum Pengembalian</label>
-                    <textarea v-model="form.notes" rows="2"
-                              class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-indigo-300 outline-none resize-none"
-                              placeholder="Kondisi umum, keterangan tambahan, dll."/>
+                <!-- 2. Catatan Umum -->
+                <div class="bg-white rounded-3xl shadow-sm border border-slate-200 p-6">
+                    <label class="block text-sm font-bold text-slate-700 mb-2">Catatan Umum Pengembalian</label>
+                    <textarea v-model="form.notes" rows="3"
+                              class="w-full px-4 py-3 rounded-2xl border border-slate-200 text-sm focus:ring-2 focus:ring-indigo-300 outline-none resize-none bg-slate-50 focus:bg-white transition-colors"
+                              placeholder="Kondisi pengembalian secara keseluruhan..."/>
                 </div>
 
-                <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
-                    <div class="flex items-center justify-between mb-3">
-                        <h2 class="text-sm font-bold text-slate-700 uppercase tracking-wide">Foto Bukti Pengembalian</h2>
-                        <span class="text-xs font-semibold text-red-500 bg-red-50 px-2 py-0.5 rounded-lg">WAJIB</span>
+                <!-- 3. Foto Bukti (Massive Dropzone) -->
+                <div>
+                    <div class="flex items-center justify-between mb-4">
+                        <div>
+                            <h2 class="text-base font-bold text-slate-800">Foto Bukti Pengembalian</h2>
+                            <p class="text-sm text-slate-500">Unggah minimal 1 foto barang secara fisik sebagai bukti sah.</p>
+                        </div>
+                        <span class="px-2.5 py-1 bg-red-100 text-red-700 text-[10px] font-black uppercase tracking-wider rounded-lg">WAJIB</span>
                     </div>
-                    <ImageUploader v-model="form.images" :max-files="8"/>
-                    <p v-if="form.errors.images" class="text-red-500 text-xs mt-2 font-medium">
-                        ⚠ {{ form.errors.images }}
+
+                    <!-- Dropzone Area -->
+                    <div @dragover.prevent="isDragging = true" 
+                         @dragleave.prevent="isDragging = false" 
+                         @drop.prevent="handleDrop"
+                         @click="$refs.fileInput.click()"
+                         class="relative w-full h-48 rounded-3xl border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-all duration-200 ease-in-out"
+                         :class="isDragging ? 'border-indigo-500 bg-indigo-50 scale-[1.01]' : 'border-slate-300 bg-slate-50 hover:bg-slate-100 hover:border-slate-400'">
+                        
+                        <input type="file" ref="fileInput" multiple accept="image/*" class="hidden" @change="handleFileSelect"/>
+                        
+                        <div class="w-16 h-16 rounded-full bg-white shadow-sm flex items-center justify-center mb-4 text-indigo-500 transition-transform duration-300"
+                             :class="isDragging ? 'scale-110' : ''">
+                            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                        </div>
+                        <p class="text-sm font-bold text-slate-700">Tarik & Lepas foto bukti di sini</p>
+                        <p class="text-xs text-slate-400 mt-1">atau klik untuk memilih file dari komputer</p>
+                    </div>
+                    
+                    <p v-if="form.errors.images || form.errors['images.0']" class="text-red-500 text-sm font-semibold mt-3 text-center">
+                        ⚠ {{ form.errors.images || 'Minimal 1 foto harus diunggah.' }}
                     </p>
-                    <p v-if="form.errors['images.0']" class="text-red-500 text-xs mt-2 font-medium">
-                        ⚠ Minimal 1 foto harus diunggah.
-                    </p>
+
+                    <!-- Previews Grid -->
+                    <div v-if="previews.length > 0" class="mt-6">
+                        <p class="text-xs font-bold text-slate-500 uppercase tracking-wide mb-3">Foto Terpilih ({{ previews.length }})</p>
+                        <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-4">
+                            <div v-for="(p, idx) in previews" :key="idx" class="relative group aspect-square rounded-2xl overflow-hidden bg-slate-100 border border-slate-200 shadow-sm">
+                                <img :src="p.url" class="w-full h-full object-cover"/>
+                                <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                    <button type="button" @click.stop="removeImage(idx)" class="w-8 h-8 rounded-full bg-red-500 text-white flex items-center justify-center hover:bg-red-600 hover:scale-110 transition-all">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
-                <div class="flex justify-end gap-3">
-                    <Link :href="route('borrows.show', borrow.id)"
-                          class="px-5 py-2.5 rounded-xl border border-slate-200 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors">
-                        Batal
-                    </Link>
-                    <button type="submit"
-                            :disabled="form.processing || form.images.length === 0"
-                            class="px-5 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 transition-colors disabled:opacity-60 flex items-center gap-2">
-                        <svg v-if="form.processing" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                <!-- Submit Button -->
+                <div class="pt-6 border-t border-slate-200">
+                    <button type="submit" :disabled="form.processing || form.images.length === 0"
+                            class="w-full py-4 rounded-2xl bg-indigo-600 text-white text-base font-bold shadow-xl shadow-indigo-200 hover:bg-indigo-700 hover:shadow-indigo-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3">
+                        <svg v-if="form.processing" class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
                             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
                         </svg>
-                        {{ form.processing ? 'Memproses...' : 'Konfirmasi Pengembalian' }}
+                        <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        {{ form.processing ? 'Memproses Pengembalian...' : 'Konfirmasi & Proses Pengembalian' }}
                     </button>
+                    <p v-if="form.images.length === 0" class="text-center text-xs text-slate-400 mt-3 font-medium">Upload minimal 1 foto untuk mengaktifkan tombol ini.</p>
                 </div>
             </form>
         </div>

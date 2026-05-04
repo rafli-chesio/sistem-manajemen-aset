@@ -37,12 +37,12 @@ const roleLabel = computed(() => {
 </script>
 
 <template>
-    <div class="flex h-screen bg-slate-50 overflow-hidden font-inter text-slate-700">
+    <div class="flex min-h-screen bg-slate-50 overflow-hidden font-inter text-slate-700">
 
         <!-- KIRI: Sidebar -->
         <aside
             class="fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-[4px_0_24px_rgba(0,0,0,0.02)] flex flex-col
-                   transform transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0"
+                   transform transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0 lg:min-h-screen"
             :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'"
         >
             <!-- Brand -->
@@ -59,7 +59,7 @@ const roleLabel = computed(() => {
             </div>
 
             <!-- Navigation -->
-            <nav class="flex-1 px-4 space-y-1 overflow-y-auto mt-4">
+            <nav class="flex-1 px-4 space-y-2.5 overflow-y-auto mt-6">
                 <Link
                     v-for="item in navItems"
                     :key="item.route"
@@ -81,25 +81,13 @@ const roleLabel = computed(() => {
                 </Link>
             </nav>
 
-            <!-- Need Help -->
-            <div class="p-6">
-                <div class="bg-[#f8f9fc] rounded-2xl p-5 text-center shadow-sm">
-                    <div class="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center mx-auto mb-3">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"/>
-                        </svg>
-                    </div>
-                    <h4 class="font-semibold text-slate-800 text-sm mb-1">Butuh Bantuan?</h4>
-                    <p class="text-xs text-slate-500 mb-4">Hubungi IT Support jika ada kendala sistem.</p>
-                    <a href="#" class="inline-block bg-indigo-600 text-white text-xs font-medium px-4 py-2 rounded-xl shadow-md shadow-indigo-200 hover:bg-indigo-700 hover:shadow-lg transition-all w-full">
-                        Hubungi IT
-                    </a>
-                </div>
-            </div>
-            
-            <div class="p-4 border-t border-slate-50 flex items-center justify-between text-xs text-slate-400">
-                 <span>&copy; 2026</span>
-                 <Link :href="route('logout')" method="post" as="button" class="hover:text-red-500 font-medium">Logout</Link>
+            <div class="p-5 mt-auto border-t border-slate-100">
+                <Link :href="route('logout')" method="post" as="button" class="flex items-center justify-center gap-2 w-full px-4 py-3 text-sm font-semibold text-red-600 bg-red-50 hover:bg-red-100 rounded-xl transition-all duration-200">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                    </svg>
+                    Logout
+                </Link>
             </div>
         </aside>
 

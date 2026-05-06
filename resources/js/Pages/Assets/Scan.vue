@@ -1,5 +1,5 @@
 <template>
-  <AppLayout title="Scan QR Code Aset">
+  <AuthenticatedLayout title="Scan QR Code Aset">
     <div class="max-w-lg mx-auto py-10 px-4">
 
       <!-- Header -->
@@ -70,13 +70,13 @@
         </Link>
       </div>
     </div>
-  </AppLayout>
+  </AuthenticatedLayout>
 </template>
 
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
 import { Link, router } from '@inertiajs/vue3'
-import AppLayout from '@/Layouts/AppLayout.vue'
+import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
 
 const scannerReady = ref(false)
 const result       = ref(null)

@@ -40,10 +40,11 @@ class AssetController extends Controller
                       ->orWhere('asset_code', 'like', "%{$s}%")
                       ->orWhere('brand', 'like', "%{$s}%");
             }))
-            ->when($request->type,     fn($q, $t) => $q->where('type', $t))
-            ->when($request->status,   fn($q, $s) => $q->where('status', $s))
-            ->when($request->category, fn($q, $c) => $q->where('category_id', $c))
-            ->when($request->location, fn($q, $l) => $q->where('location_id', $l))
+            ->when($request->type,      fn($q, $t) => $q->where('type', $t))
+            ->when($request->status,    fn($q, $s) => $q->where('status', $s))
+            ->when($request->condition, fn($q, $c) => $q->where('condition', $c))
+            ->when($request->category,  fn($q, $c) => $q->where('category_id', $c))
+            ->when($request->location,  fn($q, $l) => $q->where('location_id', $l))
             ->latest()
             ->paginate(15)
             ->withQueryString();
@@ -65,7 +66,7 @@ class AssetController extends Controller
             'categories'  => Category::orderBy('name')->get(),
             'locations'   => Location::orderBy('name')->get(),
             'departments' => $departments,
-            'filters'     => $request->only(['search', 'type', 'status', 'category', 'location', 'department']),
+            'filters'     => $request->only(['search', 'type', 'status', 'condition', 'category', 'location', 'department']),
         ]);
     }
 

@@ -10,7 +10,7 @@ class StoreUserRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()->can('user.create');
+        return auth()->user()->isAdmin();
     }
 
     public function rules(): array
@@ -22,7 +22,7 @@ class StoreUserRequest extends FormRequest
             'nip'        => ['nullable', 'string', 'max:30'],
             'department' => ['nullable', 'array'],
             'department.*' => ['string', 'max:100'],
-            'role'       => ['required', Rule::in(['super_admin', 'viewer', 'kajur'])],
+            'role'       => ['required', Rule::in(['ADMIN', 'KAJUR', 'VIEWER'])],
         ];
     }
 }

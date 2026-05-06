@@ -1,7 +1,7 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import StatusBadge from '@/Components/StatusBadge.vue';
-import Pagination from '@/Components/Pagination.vue';
+import EmptyState from '@/Components/EmptyState.vue';
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { ref, watch } from 'vue';
 import { debounce } from 'lodash-es';
@@ -13,7 +13,8 @@ const props = defineProps({
 });
 
 const page      = usePage();
-const canCreate = page.props.auth.permissions.includes('borrow.create');
+const userRole  = page.props.auth.user?.role;
+const canCreate = userRole === 'ADMIN' || userRole === 'KAJUR';
 
 const search = ref(props.filters.search ?? '');
 const status = ref(props.filters.status ?? '');
@@ -76,8 +77,14 @@ function formatDate(raw) {
         </div>
 
         <div class="space-y-3">
-            <div v-if="!borrows.data?.length" class="bg-white rounded-2xl border border-slate-100 shadow-sm p-10 text-center text-slate-400">
-                Tidak ada data peminjaman.
+            <div v-if="!borrows.data?.length" class="bg-white rounded-2xl border border-slate-100 shadow-sm">
+                <EmptyState
+                    icon="clipboard"
+                    :title="filters.search || filters.status ? 'Tidak ada peminjaman' : 'Belum ada peminjaman'"
+                    :description="filters.status ? `Tidak ada peminjaman dengan status '${filters.status}'.` : canCreate ? 'Buat permintaan peminjaman aset pertama Anda.' : 'Belum ada transaksi peminjaman.'"
+                    :action-label="canCreate ? 'Buat Permintaan' : null"
+                    :action-route="canCreate ? route('borrows.create') : null"
+                />
             </div>
             <Link v-for="b in borrows.data" :key="b.id" :href="route('borrows.show', b.id)"
                   class="block bg-white rounded-2xl border shadow-sm hover:shadow-md transition-all p-4 hover:border-indigo-200"
@@ -106,7 +113,17 @@ function formatDate(raw) {
             </Link>
         </div>
 
-        <Pagination :links="borrows.links" :meta="borrows.meta ?? borrows"/>
+        <!-- Pagination -->
+        <div v-if="borrows.links?.length > 3" class="flex items-center justify-end gap-1 mt-4">
+            <Link v-for="(link, idx) in borrows.links" :key="idx"
+                  :href="link.url ?? '#'"
+                  v-html="link.label.replace('&laquo; Previous', '←').replace('Next &raquo;', '→')"
+                  class="px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors"
+                  :class="[
+                      link.active ? 'bg-indigo-600 text-white' : 'bg-white border border-slate-100 hover:border-indigo-200 text-slate-500',
+                      !link.url ? 'opacity-40 cursor-not-allowed pointer-events-none' : ''
+                  ]"/>
+        </div>
     </AuthenticatedLayout>
 </template>
 

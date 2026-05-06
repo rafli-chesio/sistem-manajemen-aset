@@ -4,7 +4,7 @@ import { Head, useForm } from '@inertiajs/vue3';
 import { ref } from 'vue';
 
 const props = defineProps({
-    roles: { type: Array, default: () => [] },
+    roles: { type: Object, default: () => ({}) }, // { ADMIN: 'Administrator', KAJUR: '...', VIEWER: '...' }
 });
 
 const form = useForm({
@@ -14,7 +14,7 @@ const form = useForm({
     password_confirmation: '',
     nip:        '',
     department: [],
-    role:       'kajur',
+    role:       'KAJUR',
 });
 
 const newDepartment = ref('');
@@ -28,8 +28,6 @@ function addDepartment() {
 function removeDepartment(idx) {
     form.department.splice(idx, 1);
 }
-
-const roleLabels = { super_admin: 'Super Admin', viewer: 'Viewer', kajur: 'Kajur' };
 </script>
 
 <template>
@@ -73,7 +71,7 @@ const roleLabels = { super_admin: 'Super Admin', viewer: 'Viewer', kajur: 'Kajur
                             <label class="block text-sm font-medium text-slate-700 mb-1">NIP</label>
                             <input v-model="form.nip" type="text" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-indigo-300 outline-none font-mono"/>
                         </div>
-                        <div v-if="form.role === 'kajur'">
+                        <div v-if="form.role === 'KAJUR'">
                             <label class="block text-sm font-medium text-slate-700 mb-1">Departemen / Jurusan</label>
                             <div class="flex flex-col gap-2">
                                 <div class="flex flex-wrap gap-2">
@@ -94,11 +92,11 @@ const roleLabels = { super_admin: 'Super Admin', viewer: 'Viewer', kajur: 'Kajur
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-2">Peran <span class="text-red-500">*</span></label>
                         <div class="grid grid-cols-3 gap-2">
-                            <label v-for="r in roles" :key="r"
+                            <label v-for="(label, key) in roles" :key="key"
                                    class="flex flex-col items-center p-3 rounded-xl border-2 cursor-pointer transition-all text-center"
-                                   :class="form.role === r ? 'border-indigo-500 bg-indigo-50' : 'border-slate-200 hover:border-slate-300'">
-                                <input type="radio" v-model="form.role" :value="r" class="hidden"/>
-                                <span class="text-sm font-semibold text-slate-700">{{ roleLabels[r] ?? r }}</span>
+                                   :class="form.role === key ? 'border-indigo-500 bg-indigo-50' : 'border-slate-200 hover:border-slate-300'">
+                                <input type="radio" v-model="form.role" :value="key" class="hidden"/>
+                                <span class="text-sm font-semibold text-slate-700">{{ label }}</span>
                             </label>
                         </div>
                         <p v-if="form.errors.role" class="text-red-500 text-xs mt-1">{{ form.errors.role }}</p>

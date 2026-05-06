@@ -5,16 +5,17 @@ namespace App\Http\Controllers;
 use App\Models\Asset;
 use App\Models\BorrowRequest;
 use App\Models\Category;
+use App\Models\Location;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
+use Maatwebsite\Excel\Facades\Excel;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class ReportController extends Controller
 {
-    public function index(Request $request): Response
+    private function buildReportData(): array
     {
-        $this->authorize('report.view');
-
         $assetsByCategory = Category::withCount('assets')
             ->having('assets_count', '>', 0)
             ->get()
@@ -24,12 +25,10 @@ class ReportController extends Controller
             ->groupBy('condition')
             ->pluck('total', 'condition');
 
- 
         $borrowsByStatus = BorrowRequest::selectRaw('status, count(*) as total')
             ->groupBy('status')
             ->pluck('total', 'status');
 
- 
         $borrowTrend = BorrowRequest::selectRaw("DATE_FORMAT(created_at, '%Y-%m-01') as month, count(*) as total")
             ->where('created_at', '>=', now()->subMonths(12))
             ->groupByRaw("DATE_FORMAT(created_at, '%Y-%m-01')")
@@ -51,20 +50,59 @@ class ReportController extends Controller
                 'count' => $a->borrow_items_count,
             ]);
 
+        $damagedAssets = Asset::whereIn('condition', ['RUSAK_RINGAN', 'RUSAK_BERAT'])
+            ->with(['category', 'location'])
+            ->get()
+            ->map(fn($a) => [
+                'name'      => $a->name,
+                'code'      => $a->asset_code,
+                'condition' => $a->condition,
+                'category'  => $a->category?->name,
+                'location'  => $a->location?->name,
+            ]);
+
         $metrics = [
-            'total_assets'       => Asset::count(),
-            'borrowed_assets'    => Asset::where('status', 'BORROWED')->count(),
-            'damaged_assets'     => Asset::where('status', 'DAMAGED')->orWhereIn('condition', ['POOR', 'DAMAGED'])->count(),
-            'total_transactions' => BorrowRequest::count(),
+            'total_assets'        => Asset::count(),
+            'available_assets'    => Asset::where('status', 'AVAILABLE')->count(),
+            'borrowed_assets'     => Asset::where('status', 'BORROWED')->count(),
+            'maintenance_assets'  => Asset::where('status', 'MAINTENANCE')->count(),
+            'damaged_assets'      => Asset::whereIn('condition', ['RUSAK_RINGAN', 'RUSAK_BERAT'])->count(),
+            'total_transactions'  => BorrowRequest::count(),
+            'pending_approvals'   => BorrowRequest::where('status', 'PENDING')->count(),
         ];
 
-        return Inertia::render('Reports/Index', [
-            'assetsByCategory'  => $assetsByCategory,
-            'assetsByCondition' => $assetsByCondition,
-            'borrowsByStatus'   => $borrowsByStatus,
-            'borrowTrend'       => $borrowTrend,
-            'topAssets'         => $topAssets,
-            'metrics'           => $metrics,
-        ]);
+        return compact(
+            'assetsByCategory', 'assetsByCondition', 'borrowsByStatus',
+            'borrowTrend', 'topAssets', 'damagedAssets', 'metrics'
+        );
+    }
+
+    public function index(): Response
+    {
+        return Inertia::render('Reports/Index', $this->buildReportData());
+    }
+
+    public function exportPdf(Request $request)
+    {
+        abort_unless(auth()->user()->isAdmin(), 403);
+
+        $data = $this->buildReportData();
+        $data['generated_at']  = now()->format('d F Y, H:i');
+        $data['generated_by']  = auth()->user()->name;
+
+        $pdf = Pdf::loadView('reports.pdf', $data)
+            ->setPaper('a4', 'landscape');
+
+        return $pdf->download('laporan-aset-' . now()->format('Ymd') . '.pdf');
+    }
+
+    public function exportExcel(Request $request)
+    {
+        abort_unless(auth()->user()->isAdmin(), 403);
+
+        return Excel::download(
+            new \App\Exports\AssetsExport(),
+            'laporan-aset-' . now()->format('Ymd') . '.xlsx'
+        );
     }
 }

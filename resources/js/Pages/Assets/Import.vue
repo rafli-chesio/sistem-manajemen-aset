@@ -1,5 +1,5 @@
 <template>
-  <AppLayout title="Import Aset dari Excel">
+  <AuthenticatedLayout title="Import Aset dari Excel">
     <div class="max-w-2xl mx-auto py-8 px-4">
 
       <!-- Header -->
@@ -108,13 +108,13 @@
         </form>
       </div>
     </div>
-  </AppLayout>
+  </AuthenticatedLayout>
 </template>
 
 <script setup>
 import { ref } from 'vue'
 import { Link, useForm } from '@inertiajs/vue3'
-import AppLayout from '@/Layouts/AppLayout.vue'
+import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
 
 const file     = ref(null)
 const form     = useForm({ file: null })

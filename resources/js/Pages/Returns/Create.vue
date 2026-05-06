@@ -9,13 +9,13 @@ const props = defineProps({
 });
 
 const uniqueItems = computed(() =>
-    props.borrow.items?.filter(i => i.asset?.type === 'UNIQUE') ?? []
+    props.borrow.items?.filter(i => i.asset?.type === 'FIXED') ?? []
 );
 
 const form = useForm({
     item_conditions: uniqueItems.value.map(item => ({
         borrow_item_id:  item.id,
-        condition_after: item.condition_before ?? 'GOOD',
+        condition_after: item.condition_before ?? 'BAIK',
         notes:           '',
     })),
     notes:  '',
@@ -23,10 +23,9 @@ const form = useForm({
 });
 
 const conditionOptions = [
-    { val: 'GOOD',    label: 'Baik',   color: 'emerald', icon: '✓' },
-    { val: 'FAIR',    label: 'Cukup',  color: 'yellow',  icon: '~' },
-    { val: 'POOR',    label: 'Buruk',  color: 'orange',  icon: '!' },
-    { val: 'DAMAGED', label: 'Rusak',  color: 'red',     icon: '✕' },
+    { val: 'BAIK',         label: 'Baik',         color: 'emerald', icon: '✓' },
+    { val: 'RUSAK_RINGAN', label: 'Rusak Ringan', color: 'yellow',  icon: '~' },
+    { val: 'RUSAK_BERAT',  label: 'Rusak Berat',  color: 'red',     icon: '✕' },
 ];
 
 function getConditionEntry(borrowItemId) {
@@ -167,9 +166,9 @@ function submit() {
                                 <!-- Change indicator -->
                                 <div v-if="getConditionEntry(item.id) && item.condition_before && getConditionEntry(item.id).condition_after !== item.condition_before"
                                      class="flex items-center gap-2 p-3 rounded-xl"
-                                     :class="['DAMAGED','POOR'].includes(getConditionEntry(item.id).condition_after) && !['DAMAGED','POOR'].includes(item.condition_before) ? 'bg-red-50 border border-red-100' : 'bg-emerald-50 border border-emerald-100'">
-                                    <span class="text-xs font-semibold" :class="['DAMAGED','POOR'].includes(getConditionEntry(item.id).condition_after) && !['DAMAGED','POOR'].includes(item.condition_before) ? 'text-red-700' : 'text-emerald-700'">
-                                        {{ ['DAMAGED','POOR'].includes(getConditionEntry(item.id).condition_after) && !['DAMAGED','POOR'].includes(item.condition_before) ? '⚠ Perhatian: Kondisi barang menurun.' : '✨ Kondisi barang berubah.' }}
+                                     :class="['RUSAK_RINGAN','RUSAK_BERAT'].includes(getConditionEntry(item.id).condition_after) && !['RUSAK_RINGAN','RUSAK_BERAT'].includes(item.condition_before) ? 'bg-red-50 border border-red-100' : 'bg-emerald-50 border border-emerald-100'">
+                                    <span class="text-xs font-semibold" :class="['RUSAK_RINGAN','RUSAK_BERAT'].includes(getConditionEntry(item.id).condition_after) && !['RUSAK_RINGAN','RUSAK_BERAT'].includes(item.condition_before) ? 'text-red-700' : 'text-emerald-700'">
+                                        {{ ['RUSAK_RINGAN','RUSAK_BERAT'].includes(getConditionEntry(item.id).condition_after) && !['RUSAK_RINGAN','RUSAK_BERAT'].includes(item.condition_before) ? '⚠ Perhatian: Kondisi barang menurun.' : '✨ Kondisi barang berubah.' }}
                                     </span>
                                 </div>
 

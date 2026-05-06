@@ -30,7 +30,7 @@ function submitReject() {
 
 const isReturnable = computed(() =>
     ['APPROVED', 'OVERDUE'].includes(props.borrow.status) &&
-    props.borrow.items?.some(i => i.asset?.type === 'UNIQUE')
+    props.borrow.items?.some(i => i.asset?.type === 'FIXED')
 );
 
 // Format tanggal ISO → bahasa Indonesia
@@ -163,7 +163,7 @@ function formatDatetime(raw) {
                             <p class="font-semibold text-slate-800 truncate">{{ item.asset?.name }}</p>
                             <p class="text-xs font-mono text-slate-400">{{ item.asset?.asset_code }}</p>
                             <p class="text-xs text-slate-400 mt-0.5">
-                                {{ item.asset?.type === 'UNIQUE' ? '🔖 Barang Unik' : '📦 Habis Pakai' }}
+                                {{ item.asset?.type === 'FIXED' ? '📦 Aset Tetap' : '🧴 Habis Pakai' }}
                             </p>
                         </div>
                         <div class="text-right">

@@ -3,37 +3,33 @@ import { ref, computed } from 'vue';
 import { Link, usePage } from '@inertiajs/vue3';
 import FlashMessage from '@/Components/FlashMessage.vue';
 
-const page = usePage();
-const user = computed(() => page.props.auth.user);
-const roles = computed(() => page.props.auth.roles);
+const page   = usePage();
+const user   = computed(() => page.props.auth.user);
+const role   = computed(() => user.value?.role ?? '');
 const unread = computed(() => page.props.unreadNotifications ?? 0);
 
-const isSuperAdmin = computed(() => roles.value.includes('super_admin'));
-const isViewer     = computed(() => roles.value.includes('viewer'));
-const isKajur      = computed(() => roles.value.includes('kajur'));
+const isAdmin  = computed(() => role.value === 'ADMIN');
+const isKajur  = computed(() => role.value === 'KAJUR');
+const isViewer = computed(() => role.value === 'VIEWER');
 
 const sidebarOpen = ref(false);
 
 const navItems = computed(() => {
     const items = [
-        { name: 'Dashboard',        route: 'dashboard',       icon: 'home',       always: true },
-        { name: 'Aset',             route: 'assets.index',    icon: 'cube',       always: true },
-        { name: 'Peminjaman',       route: 'borrows.index',   icon: 'clipboard',  always: true },
-        { name: 'Laporan',          route: 'reports.index',   icon: 'chart-bar',  roles: ['super_admin','viewer'] },
-        { name: 'Pengguna',         route: 'users.index',     icon: 'users',      roles: ['super_admin'] },
-        { name: 'Log Audit',        route: 'audit-logs.index',icon: 'shield',     roles: ['super_admin'] },
+        { name: 'Dashboard',        route: 'dashboard',        icon: 'home',       always: true },
+        { name: 'Aset',             route: 'assets.index',     icon: 'cube',       always: true },
+        { name: 'Peminjaman',       route: 'borrows.index',    icon: 'clipboard',  always: true },
+        { name: 'Laporan',          route: 'reports.index',    icon: 'chart-bar',  roles: ['ADMIN', 'VIEWER'] },
+        { name: 'Pengguna',         route: 'users.index',      icon: 'users',      roles: ['ADMIN'] },
+        { name: 'Log Audit',        route: 'audit-logs.index', icon: 'shield',     roles: ['ADMIN'] },
     ];
     return items.filter(item =>
-        item.always || item.roles?.some(r => roles.value.includes(r))
+        item.always || item.roles?.includes(role.value)
     );
 });
 
-const roleLabel = computed(() => {
-    if (isSuperAdmin.value) return 'Super Admin';
-    if (isViewer.value)     return 'Viewer';
-    if (isKajur.value)      return 'Kajur';
-    return '';
-});
+const roleLabelMap = { ADMIN: 'Administrator', KAJUR: 'Kepala Jurusan', VIEWER: 'Viewer' };
+const roleLabel = computed(() => roleLabelMap[role.value] ?? role.value);
 </script>
 
 <template>

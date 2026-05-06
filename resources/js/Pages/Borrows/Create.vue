@@ -22,7 +22,7 @@ function formatDate(isoDate) {
 
 const form = useForm({
     borrow_date: today,
-    return_date: returnDate, // 7 hari dari sekarang (untuk UNIQUE)
+    return_date: returnDate, // 7 hari dari sekarang (untuk FIXED)
     notes:       '',
     items:       [],
 });
@@ -38,7 +38,7 @@ const filteredAssets = computed(() =>
 );
 
 const hasUniqueItem = computed(() =>
-    form.items.some(i => i._asset?.type === 'UNIQUE')
+    form.items.some(i => i._asset?.type === 'FIXED')
 );
 
 function toggleAsset(asset) {
@@ -59,7 +59,7 @@ function isSelected(assetId) {
 }
 
 function submit() {
-    // Kirim return_date hanya jika ada UNIQUE item di cart
+    // Kirim return_date hanya jika ada FIXED item di cart
     // Untuk request yang hanya berisi CONSUMABLE, return_date = borrow_date (atau null)
     const payload = {
         borrow_date: form.borrow_date,
@@ -114,8 +114,8 @@ function submit() {
                                 </div>
                                 <!-- Badge Type -->
                                 <div class="absolute top-3 right-3 px-2.5 py-1 rounded-lg text-[10px] font-bold tracking-wide shadow-sm"
-                                     :class="asset.type === 'UNIQUE' ? 'bg-violet-100 text-violet-700' : 'bg-sky-100 text-sky-700'">
-                                    {{ asset.type === 'UNIQUE' ? '🔖 UNIK' : '📦 HABIS PAKAI' }}
+                                     :class="asset.type === 'FIXED' ? 'bg-indigo-100 text-indigo-700' : 'bg-sky-100 text-sky-700'">
+                                    {{ asset.type === 'FIXED' ? '📦 ASET TETAP' : '🧴 HABIS PAKAI' }}
                                 </div>
                             </div>
 
@@ -164,8 +164,8 @@ function submit() {
                                     <div class="pr-8">
                                         <p class="text-sm font-semibold text-slate-800 leading-tight mb-1">{{ item._asset.name }}</p>
                                         <p class="text-[10px] uppercase font-bold tracking-wide"
-                                           :class="item._asset.type === 'UNIQUE' ? 'text-violet-600' : 'text-sky-600'">
-                                            {{ item._asset.type === 'UNIQUE' ? '🔖 UNIK' : '📦 HABIS PAKAI' }}
+                                           :class="item._asset.type === 'FIXED' ? 'text-indigo-600' : 'text-sky-600'">
+                                            {{ item._asset.type === 'FIXED' ? '📦 ASET TETAP' : '🧴 HABIS PAKAI' }}
                                         </p>
                                     </div>
                                     

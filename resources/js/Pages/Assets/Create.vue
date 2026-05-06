@@ -24,11 +24,11 @@ const form = useForm({
     name:        '',
     brand:       '',
     year:        new Date().getFullYear(),
-    condition:   'GOOD',
+    condition:   'BAIK',
     category_id: '',
     location_id: '',
     department:  '',
-    type:        'UNIQUE',
+    type:        'FIXED',
     status:      'AVAILABLE',   // default; untuk CONSUMABLE selalu AVAILABLE
     stock:       null,
     description: '',
@@ -94,19 +94,18 @@ function submit() {
                         <!-- Condition -->
                         <div>
                             <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Kondisi Awal <span class="text-red-500">*</span></label>
-                            <select v-model="form.condition" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-indigo-300 outline-none bg-white font-medium text-slate-700">
-                                <option value="GOOD">✅ Baik (Layak Pakai)</option>
-                                <option value="FAIR">⚠️ Cukup (Bisa Dipakai)</option>
-                                <option value="POOR">🔧 Buruk (Perlu Perbaikan)</option>
-                                <option value="DAMAGED">❌ Rusak (Tidak Layak)</option>
+                            <select v-model="form.condition" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-indigo-300 outline-none bg-white">
+                                <option value="BAIK">✨ Baik (Layak Pakai)</option>
+                                <option value="RUSAK_RINGAN">⚠ Rusak Ringan (Bisa Diperbaiki)</option>
+                                <option value="RUSAK_BERAT">❌ Rusak Berat (Tidak Layak)</option>
                             </select>
                         </div>
                         
-                        <div v-if="form.type === 'UNIQUE'">
+                        <div v-if="form.type === 'FIXED'">
                             <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Status Awal</label>
                             <select v-model="form.status" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-indigo-300 outline-none bg-white">
                                 <option value="AVAILABLE">Tersedia</option>
-                                <option value="DAMAGED">Rusak</option>
+                                <option value="MAINTENANCE">Maintenance</option>
                                 <option value="LOST">Hilang</option>
                             </select>
                         </div>
@@ -121,7 +120,7 @@ function submit() {
                         <div>
                             <label class="block text-xs font-bold text-slate-700 mb-2 uppercase tracking-wide">Tipe Aset <span class="text-red-500">*</span></label>
                             <div class="grid grid-cols-2 gap-3">
-                                <label v-for="opt in [{val:'UNIQUE', label:'🔖 Aset Unik', desc:'1 unit = 1 record'}, {val:'CONSUMABLE', label:'📦 Habis Pakai', desc:'Berbasis stok'}]"
+                                <label v-for="opt in [{val:'FIXED', label:'📦 Aset Tetap', desc:'1 unit = 1 record'}, {val:'CONSUMABLE', label:'🧴 Habis Pakai', desc:'Berbasis stok'}]"
                                        :key="opt.val"
                                        class="flex items-start gap-2 p-3 rounded-xl border-2 cursor-pointer transition-all"
                                        :class="form.type === opt.val ? 'border-indigo-500 bg-indigo-50/50 shadow-inner' : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'">

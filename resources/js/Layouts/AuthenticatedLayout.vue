@@ -37,16 +37,16 @@ const roleLabel = computed(() => roleLabelMap[role.value] ?? role.value);
 
         <!-- KIRI: Sidebar -->
         <aside
-            class="fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-[4px_0_24px_rgba(0,0,0,0.02)] flex flex-col
-                   transform transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0 lg:min-h-screen"
+            class="fixed inset-y-0 left-0 z-50 w-72 bg-white/80 backdrop-blur-xl border-r border-slate-200/50 shadow-soft flex flex-col
+                   transform transition-all duration-300 ease-out lg:relative lg:translate-x-0 lg:min-h-screen"
             :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'"
         >
             <!-- Brand -->
             <div class="px-6 pt-8 pb-6">
-                <Link :href="route('dashboard')" class="flex items-center gap-3 group">
-                    <div class="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center">
+                <Link :href="route('dashboard')" class="flex items-center gap-4 group">
+                    <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-glow group-hover:scale-105 transition-transform duration-300">
                         <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
                                   d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
                         </svg>
                     </div>
@@ -60,10 +60,10 @@ const roleLabel = computed(() => roleLabelMap[role.value] ?? role.value);
                     v-for="item in navItems"
                     :key="item.route"
                     :href="route(item.route)"
-                    class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200"
+                    class="flex items-center gap-3.5 px-4 py-3.5 rounded-2xl text-[14px] font-bold transition-all duration-300 relative overflow-hidden group"
                     :class="route().current(item.route.replace('.index','.*'))
-                        ? 'bg-indigo-50 text-indigo-700 font-semibold'
-                        : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'"
+                        ? 'bg-gradient-to-r from-indigo-50 to-purple-50/30 text-indigo-700 shadow-sm ring-1 ring-indigo-100/50'
+                        : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'"
                 >
                     <svg class="w-5 h-5" :class="route().current(item.route.replace('.index','.*')) ? 'text-indigo-600' : 'text-slate-400'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path v-if="item.icon==='home'"      stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
@@ -77,12 +77,22 @@ const roleLabel = computed(() => roleLabelMap[role.value] ?? role.value);
                 </Link>
             </nav>
 
-            <div class="p-5 mt-auto border-t border-slate-100">
-                <Link :href="route('logout')" method="post" as="button" class="flex items-center justify-center gap-2 w-full px-4 py-3 text-sm font-semibold text-red-600 bg-red-50 hover:bg-red-100 rounded-xl transition-all duration-200">
+            <div class="p-5 mt-auto">
+                <div class="p-4 rounded-2xl bg-slate-50 border border-slate-100 mb-4 flex items-center gap-3 shadow-sm">
+                    <div class="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-lg">
+                        {{ user?.name?.charAt(0) ?? 'U' }}
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-bold text-slate-800 truncate">{{ user?.name }}</p>
+                        <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide">{{ roleLabel }}</p>
+                    </div>
+                </div>
+
+                <Link :href="route('logout')" method="post" as="button" class="flex items-center justify-center gap-2 w-full px-4 py-3.5 text-sm font-bold text-red-600 bg-red-50 hover:bg-red-100 hover:text-red-700 rounded-2xl transition-all duration-300">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
                     </svg>
-                    Logout
+                    Log Out
                 </Link>
             </div>
         </aside>

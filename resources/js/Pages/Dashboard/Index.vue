@@ -129,16 +129,20 @@ const dates = Array.from({length: 31}, (_, i) => i + 1);
             
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-5">
                 <div v-for="card in currentCards" :key="card.key"
-                     class="bg-white border border-slate-100 rounded-2xl p-5 flex flex-col shadow-sm relative overflow-hidden group hover:-translate-y-1 transition-all duration-300">
+                     class="bg-white/70 backdrop-blur-md border border-slate-100 rounded-3xl p-6 flex flex-col shadow-sm relative overflow-hidden group hover:-translate-y-1 hover:shadow-soft hover:border-indigo-100 transition-all duration-300">
                     
-                    <div class="flex items-start justify-between gap-3">
+                    <!-- Decorative background glow -->
+                    <div class="absolute -right-6 -top-6 w-24 h-24 bg-gradient-to-br from-indigo-500/10 to-purple-500/10 rounded-full blur-2xl group-hover:bg-indigo-500/20 transition-all duration-500"></div>
+
+                    <div class="flex items-start justify-between gap-3 relative z-10">
                         <div class="min-w-0 flex-1">
-                            <p class="text-[10px] sm:text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1.5 leading-snug">{{ card.label }}</p>
-                            <p class="text-2xl sm:text-3xl font-extrabold text-gray-800 tracking-tight">{{ stats[card.key] ?? 0 }}</p>
+                            <p class="text-[11px] font-extrabold text-slate-500 uppercase tracking-widest mb-2 leading-snug">{{ card.label }}</p>
+                            <p class="text-3xl sm:text-4xl font-black text-slate-800 tracking-tight">{{ stats[card.key] ?? 0 }}</p>
                         </div>
-                        <div class="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" :class="card.iconBg">
-                            <svg class="w-5 h-5" :class="card.iconColor" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="card.icon"/>
+                        <div class="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 transition-transform duration-300 group-hover:scale-110 shadow-sm group-hover:shadow-glow" 
+                             :class="[card.iconBg, card.iconColor.replace('text-', 'bg-').replace('500', '500 text-white')]">
+                            <svg class="w-6 h-6 text-current" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" :d="card.icon"/>
                             </svg>
                         </div>
                     </div>

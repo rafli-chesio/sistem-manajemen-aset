@@ -17,8 +17,8 @@ const localLocations  = ref([...props.locations]);
 
 // Check if current user can create categories/locations
 const page = usePage();
-const canManage = page.props.auth.roles.includes('super_admin') ||
-                  page.props.auth.roles.includes('kajur');
+const canManage = page.props.auth.user.role === 'ADMIN' ||
+                  page.props.auth.user.role === 'KAJUR';
 
 const form = useForm({
     name:        '',
@@ -160,7 +160,7 @@ function submit() {
                         />
 
                         <!-- Department Field for Super Admin -->
-                        <div v-if="page.props.auth.roles.includes('super_admin')">
+                        <div v-if="page.props.auth.user.role === 'ADMIN'">
                             <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Alokasi Jurusan</label>
                             <select v-model="form.department" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-indigo-300 outline-none bg-white">
                                 <option value="">— Fasilitas Umum (Non-Jurusan) —</option>

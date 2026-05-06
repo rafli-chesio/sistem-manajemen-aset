@@ -201,19 +201,19 @@ const statusLabel = {
             </Transition>
 
             <!-- Table -->
-            <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden mb-6">
+            <div class="bg-white/80 backdrop-blur-md rounded-3xl border border-slate-100 shadow-glass overflow-hidden mb-6">
                 <div class="overflow-x-auto">
                     <table class="w-full text-left min-w-[820px]">
                         <thead>
-                            <tr class="border-b border-slate-100">
-                                <th class="px-5 py-4 text-[10px] uppercase text-slate-400 tracking-wider font-semibold">Nama Aset</th>
-                                <th class="px-4 py-4 text-[10px] uppercase text-slate-400 tracking-wider font-semibold">Tipe & Kategori</th>
-                                <th class="px-4 py-4 text-[10px] uppercase text-slate-400 tracking-wider font-semibold text-center">Kondisi</th>
-                                <th class="px-4 py-4 text-[10px] uppercase text-slate-400 tracking-wider font-semibold text-center">Status / Stok</th>
-                                <th class="px-5 py-4 text-[10px] uppercase text-slate-400 tracking-wider font-semibold text-right">Aksi</th>
+                            <tr class="border-b border-slate-100 bg-slate-50/50">
+                                <th class="px-6 py-5 text-[10px] uppercase text-slate-500 tracking-widest font-extrabold">Nama Aset</th>
+                                <th class="px-5 py-5 text-[10px] uppercase text-slate-500 tracking-widest font-extrabold">Tipe & Kategori</th>
+                                <th class="px-5 py-5 text-[10px] uppercase text-slate-500 tracking-widest font-extrabold text-center">Kondisi</th>
+                                <th class="px-5 py-5 text-[10px] uppercase text-slate-500 tracking-widest font-extrabold text-center">Status / Stok</th>
+                                <th class="px-6 py-5 text-[10px] uppercase text-slate-500 tracking-widest font-extrabold text-right">Aksi</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-slate-50">
+                        <tbody class="divide-y divide-slate-50/80">
                             <!-- Empty State -->
                             <tr v-if="!assets.data?.length">
                                 <td colspan="5" class="py-2">
@@ -229,8 +229,8 @@ const statusLabel = {
 
                             <!-- Rows -->
                             <tr v-for="asset in assets.data" :key="asset.id"
-                                class="hover:bg-slate-50/60 transition-colors">
-                                <td class="px-5 py-3.5">
+                                class="hover:bg-slate-50/80 hover:shadow-sm transition-all duration-300 relative group">
+                                <td class="px-6 py-4">
                                     <div class="flex items-center gap-3">
                                         <div class="w-9 h-9 rounded-xl overflow-hidden bg-slate-100 flex-shrink-0 flex items-center justify-center">
                                             <img v-if="asset.images?.length" :src="'/storage/' + asset.images[0].path"

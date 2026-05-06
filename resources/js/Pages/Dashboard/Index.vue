@@ -160,7 +160,50 @@ const dates = Array.from({length: 31}, (_, i) => i + 1);
             </Link>
         </div>
 
-
+        <!-- Table Section -->
+        <div class="mt-2 bg-white rounded-[24px] shadow-[0_4px_24px_rgba(0,0,0,0.02)] overflow-hidden">
+            <div class="px-6 py-5 flex items-center justify-between border-b border-slate-50">
+                <h2 class="text-lg font-bold text-slate-800 tracking-tight">{{ isKajur ? 'Riwayat Peminjaman Saya' : 'Peminjaman Terbaru' }}</h2>
+                <Link :href="route('borrows.index')" class="text-sm font-semibold text-indigo-600 hover:text-indigo-700 bg-indigo-50 px-3 py-1.5 rounded-lg transition-colors">
+                    View All &rsaquo;
+                </Link>
+            </div>
+            
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm text-left">
+                    <thead>
+                        <tr class="text-xs font-semibold text-slate-400 border-b border-slate-50 uppercase tracking-wider">
+                            <th class="px-6 py-4 font-medium">#</th>
+                            <th v-if="!isKajur" class="px-6 py-4 font-medium">Peminjam</th>
+                            <th class="px-6 py-4 font-medium">Jml Barang</th>
+                            <th class="px-6 py-4 font-medium">Tgl Pinjam</th>
+                            <th class="px-6 py-4 font-medium">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-50/50">
+                        <tr v-if="recentBorrows.length === 0">
+                            <td colspan="5" class="px-6 py-10 text-center text-slate-400">Belum ada peminjaman.</td>
+                        </tr>
+                        <tr v-for="b in recentBorrows" :key="b.id" class="hover:bg-slate-50/50 transition-colors group">
+                            <td class="px-6 py-4">
+                                <span class="font-mono text-xs text-slate-400 bg-slate-100 px-2 py-1 rounded-md">#{{ b.id }}</span>
+                            </td>
+                            <td v-if="!isKajur" class="px-6 py-4 font-medium text-slate-700">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-xs">
+                                        {{ b.user_name.charAt(0) }}
+                                    </div>
+                                    {{ b.user_name }}
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 text-slate-600 font-medium">{{ b.item_count }} Item</td>
+                            <td class="px-6 py-4 text-slate-500">{{ b.borrow_date }}</td>
+                            <td class="px-6 py-4"><StatusBadge :status="b.status"/></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
 
         <!-- RIGHT PANEL (Injected into AuthenticatedLayout via slot) -->
         <template #right>

@@ -10,39 +10,35 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Inertia\Inertia;
 use Inertia\Response;
-use Spatie\Permission\Models\Role;
 
 class UserController extends Controller
 {
     public function index(Request $request): Response
     {
-        $this->authorize('user.view');
+        abort_unless(auth()->user()->isAdmin(), 403);
 
-        $users = User::with('roles')
+        $users = User::query()
             ->when($request->search, fn($q, $s) => $q->where('name', 'like', "%{$s}%")
-                ->orWhere('email', 'like', "%{$s}%"))
-            ->when($request->role, fn($q, $r) => $q->whereHas('roles', fn($rq) => $rq->where('name', $r)))
+                ->orWhere('email', 'like', "%{$s}%")
+                ->orWhere('nip', 'like', "%{$s}%"))
+            ->when($request->role, fn($q, $r) => $q->where('role', $r))
             ->latest()
             ->paginate(15)
             ->withQueryString();
 
-        $users->through(fn($u) => array_merge($u->toArray(), [
-            'role' => $u->roles->first()?->name,
-        ]));
-
         return Inertia::render('Users/Index', [
             'users'   => $users,
             'filters' => $request->only(['search', 'role']),
-            'roles'   => Role::pluck('name'),
+            'roles'   => User::$roles,
         ]);
     }
 
     public function create(): Response
     {
-        $this->authorize('user.create');
+        abort_unless(auth()->user()->isAdmin(), 403);
 
         return Inertia::render('Users/Create', [
-            'roles' => Role::pluck('name'),
+            'roles' => User::$roles,
         ]);
     }
 
@@ -54,9 +50,8 @@ class UserController extends Controller
             'password'   => Hash::make($request->password),
             'nip'        => $request->nip,
             'department' => $request->department,
+            'role'       => $request->role ?? User::ROLE_VIEWER,
         ]);
-
-        $user->assignRole($request->role);
 
         return redirect()->route('users.index')
             ->with('success', "Pengguna {$user->name} berhasil ditambahkan.");
@@ -64,26 +59,23 @@ class UserController extends Controller
 
     public function edit(User $user): Response
     {
-        $this->authorize('user.edit');
-
-        $user->load('roles');
+        abort_unless(auth()->user()->isAdmin(), 403);
 
         return Inertia::render('Users/Edit', [
-            'userRecord' => array_merge($user->toArray(), ['role' => $user->roles->first()?->name]),
-            'roles'      => Role::pluck('name'),
+            'userRecord' => $user,
+            'roles'      => User::$roles,
         ]);
     }
 
     public function update(UpdateUserRequest $request, User $user): RedirectResponse
     {
-        $data = $request->only(['name', 'email', 'nip', 'department']);
+        $data = $request->only(['name', 'email', 'nip', 'department', 'role']);
 
         if ($request->filled('password')) {
             $data['password'] = Hash::make($request->password);
         }
 
         $user->update($data);
-        $user->syncRoles([$request->role]);
 
         return redirect()->route('users.index')
             ->with('success', "Data pengguna {$user->name} berhasil diperbarui.");
@@ -91,13 +83,13 @@ class UserController extends Controller
 
     public function destroy(User $user): RedirectResponse
     {
-        $this->authorize('user.delete');
+        abort_unless(auth()->user()->isAdmin(), 403);
 
         if ($user->id === auth()->id()) {
             return back()->with('error', 'Anda tidak dapat menghapus akun Anda sendiri.');
         }
 
-        $user->delete();
+        $user->delete(); // soft delete
 
         return redirect()->route('users.index')
             ->with('success', "Pengguna {$user->name} berhasil dihapus.");

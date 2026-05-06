@@ -10,40 +10,52 @@ class AdminUserSeeder extends Seeder
 {
     public function run(): void
     {
-        $admin = User::firstOrCreate(
+        // ADMIN — full access
+        User::firstOrCreate(
             ['email' => 'admin@sekolah.sch.id'],
             [
-                'name'       => 'Super Admin',
+                'name'       => 'Administrator',
                 'password'   => Hash::make('password'),
-                'nip'        => '000000000000000000',
-                'department' => 'Wakil Kepala Sekolah',
+                'nip'        => '000000000000000001',
+                'department' => null,
+                'role'       => User::ROLE_ADMIN,
             ]
         );
 
-        $admin->assignRole('super_admin');
-
-        // Sample Viewer account
-        $viewer = User::firstOrCreate(
+        // VIEWER — Kepala Sekolah, read-only
+        User::firstOrCreate(
             ['email' => 'kepsek@sekolah.sch.id'],
             [
                 'name'       => 'Kepala Sekolah',
                 'password'   => Hash::make('password'),
                 'nip'        => '196801011990011001',
-                'department' => 'Kepala Sekolah',
+                'department' => null,
+                'role'       => User::ROLE_VIEWER,
             ]
         );
-        $viewer->assignRole('viewer');
 
-        // Sample Kajur account
-        $kajur = User::firstOrCreate(
+        // KAJUR — Kepala Jurusan Teknik Informatika
+        User::firstOrCreate(
             ['email' => 'kajur.ti@sekolah.sch.id'],
             [
                 'name'       => 'Kajur Teknik Informatika',
                 'password'   => Hash::make('password'),
                 'nip'        => '197503012005011002',
-                'department' => 'Teknik Informatika',
+                'department' => json_encode(['Teknik Informatika']),
+                'role'       => User::ROLE_KAJUR,
             ]
         );
-        $kajur->assignRole('kajur');
+
+        // KAJUR — Kepala Jurusan Akuntansi
+        User::firstOrCreate(
+            ['email' => 'kajur.akuntansi@sekolah.sch.id'],
+            [
+                'name'       => 'Kajur Akuntansi',
+                'password'   => Hash::make('password'),
+                'nip'        => '198002022010012003',
+                'department' => json_encode(['Akuntansi']),
+                'role'       => User::ROLE_KAJUR,
+            ]
+        );
     }
 }

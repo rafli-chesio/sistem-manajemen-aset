@@ -14,12 +14,17 @@ class BorrowItem extends Model
         'asset_id',
         'quantity',
         'condition_before',
+        'condition_after',
+        'returned_by',
+        'returned_at',
+        'return_notes',
     ];
 
     protected function casts(): array
     {
         return [
-            'quantity' => 'integer',
+            'quantity'    => 'integer',
+            'returned_at' => 'datetime',
         ];
     }
 
@@ -33,8 +38,18 @@ class BorrowItem extends Model
         return $this->belongsTo(Asset::class);
     }
 
+    public function returnedBy()
+    {
+        return $this->belongsTo(User::class, 'returned_by');
+    }
+
     public function returnItem()
     {
         return $this->hasOne(ReturnItem::class, 'borrow_item_id');
+    }
+
+    public function isReturned(): bool
+    {
+        return $this->returned_at !== null;
     }
 }

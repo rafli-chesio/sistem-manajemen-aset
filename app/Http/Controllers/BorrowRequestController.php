@@ -20,31 +20,35 @@ class BorrowRequestController extends Controller
         $user = auth()->user();
 
         $query = BorrowRequest::with(['user', 'items.asset', 'approver'])
-            ->when($request->status,  fn($q, $s) => $q->where('status', $s))
-            ->when($request->search,  fn($q, $s) => $q->whereHas(
+            ->when($request->status, fn($q, $s) => $q->where('status', $s))
+            ->when($request->search, fn($q, $s) => $q->whereHas(
                 'user', fn($uq) => $uq->where('name', 'like', "%{$s}%")
             ));
 
-        if ($user->hasRole('kajur')) {
+        // KAJUR hanya melihat permintaan milik sendiri
+        if ($user->isKajur()) {
             $query->where('user_id', $user->id);
         }
 
         $borrows = $query->latest()->paginate(15)->withQueryString();
 
         return Inertia::render('Borrows/Index', [
-            'borrows' => $borrows,
-            'filters' => $request->only(['status', 'search']),
-            'canApprove' => $user->can('borrow.approve'),
+            'borrows'    => $borrows,
+            'filters'    => $request->only(['status', 'search']),
+            'canApprove' => $user->canApprove(),
         ]);
     }
 
     public function create(): Response
     {
-        $this->authorize('borrow.create');
+        $user = auth()->user();
+
+        // Hanya KAJUR dan ADMIN yang bisa mengajukan peminjaman
+        abort_unless($user->canManageAssets(), 403, 'Anda tidak memiliki akses untuk meminjam aset.');
 
         $assets = Asset::with(['category', 'images'])
             ->where(fn($q) => $q
-                ->where(fn($sq) => $sq->where('type', 'UNIQUE')->where('status', 'AVAILABLE'))
+                ->where(fn($sq) => $sq->where('type', 'FIXED')->where('status', 'AVAILABLE'))
                 ->orWhere(fn($sq) => $sq->where('type', 'CONSUMABLE')->where('stock', '>', 0))
             )
             ->orderBy('name')
@@ -61,13 +65,14 @@ class BorrowRequestController extends Controller
             $items      = $request->input('items');
             $borrowDate = today();
 
-            $hasUnique = collect($items)->contains(function ($item) {
+            $hasFixed = collect($items)->contains(function ($item) {
                 $asset = Asset::find($item['asset_id']);
-                return $asset && $asset->isUnique();
+                return $asset && $asset->isFixed();
             });
 
-            $returnDate = $hasUnique
-                ? $borrowDate->copy()->addDays(7)
+            // Maks pinjam 30 hari untuk aset tetap
+            $returnDate = $hasFixed
+                ? $borrowDate->copy()->addDays(30)
                 : $borrowDate->copy();
 
             $borrow = $this->borrowService->createRequest(
@@ -95,19 +100,21 @@ class BorrowRequestController extends Controller
             'approver',
             'returnRecord.images',
             'returnRecord.processor',
-            'returnRecord.returnItems.borrowItem.asset',  // ← per-item conditions
+            'returnRecord.returnItems.borrowItem.asset',
         ]);
+
+        $user = auth()->user();
 
         return Inertia::render('Borrows/Show', [
             'borrow'     => $borrow,
-            'canApprove' => auth()->user()->can('borrow.approve'),
-            'canReturn'  => auth()->user()->hasRole('kajur'),  // hanya kajur yang mengembalikan
+            'canApprove' => $user->canApprove(),
+            'canReturn'  => $user->isKajur() || $user->isAdmin(),
         ]);
     }
 
     public function approve(BorrowRequest $borrow): RedirectResponse
     {
-        $this->authorize('borrow.approve');
+        abort_unless(auth()->user()->canApprove(), 403);
 
         try {
             $this->borrowService->approve($borrow, auth()->user());
@@ -119,7 +126,7 @@ class BorrowRequestController extends Controller
 
     public function reject(Request $request, BorrowRequest $borrow): RedirectResponse
     {
-        $this->authorize('borrow.approve');
+        abort_unless(auth()->user()->canApprove(), 403);
 
         $request->validate([
             'rejection_reason' => ['required', 'string', 'max:500'],

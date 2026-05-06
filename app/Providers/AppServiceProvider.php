@@ -2,10 +2,10 @@
 
 namespace App\Providers;
 
+use App\Models\User;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\ServiceProvider;
-use Spatie\Permission\Models\Permission;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -19,31 +19,25 @@ class AppServiceProvider extends ServiceProvider
         Vite::prefetch(concurrency: 3);
 
         /**
-         * Bridge Spatie permissions → Laravel Gate.
+         * Simple role-based Gate definitions.
          *
-         * This allows $this->authorize('permission.name') in controllers
-         * and @can('permission.name') in Blade/Inertia to work seamlessly
-         * using the Spatie permission system as the source of truth.
-         *
-         * Super Admin bypass: any user with the super_admin role automatically
-         * passes every Gate check.
+         * Using direct role column on users table instead of Spatie permissions
+         * for simpler, more maintainable RBAC.
          */
-        Gate::before(function ($user, $ability) {
-            if ($user->hasRole('super_admin')) {
-                return true; // Super admin bypasses all checks
-            }
-        });
 
-        // Register each Spatie permission as a Gate ability
-        // Using a cached approach — only runs once per request
-        try {
-            Permission::all()->each(function ($permission) {
-                Gate::define($permission->name, function ($user) use ($permission) {
-                    return $user->hasPermissionTo($permission);
-                });
-            });
-        } catch (\Exception $e) {
-            // Silently fail during migrations when permission table doesn't exist yet
-        }
+        // ADMIN can manage everything
+        Gate::define('manage-admin', fn(User $user) => $user->isAdmin());
+
+        // ADMIN + KAJUR can manage assets
+        Gate::define('manage-assets', fn(User $user) => $user->canManageAssets());
+
+        // ADMIN can approve borrows
+        Gate::define('approve-borrows', fn(User $user) => $user->canApprove());
+
+        // ADMIN + KAJUR can borrow
+        Gate::define('create-borrows', fn(User $user) => $user->canManageAssets());
+
+        // All authenticated users can view
+        Gate::define('view-assets', fn(User $user) => true);
     }
 }

@@ -20,10 +20,8 @@ class AssetController extends Controller
 
     public function index(Request $request): Response
     {
-        $this->authorize('asset.view');
-
-        $user = auth()->user();
-        $isKajur = $user->hasRole('kajur');
+        $user    = auth()->user();
+        $isKajur = $user->isKajur();
 
         $query = Asset::with(['category', 'location', 'images']);
 
@@ -61,6 +59,9 @@ class AssetController extends Controller
 
         return Inertia::render('Assets/Index', [
             'assets'      => $assets,
+            'available_assets' => Asset::where('type', 'FIXED')->where('status', 'AVAILABLE')->count(),
+            'borrowed_assets'  => Asset::where('type', 'FIXED')->where('status', 'BORROWED')->count(),
+            'maintenance_assets' => Asset::where('status', 'MAINTENANCE')->count(),
             'categories'  => Category::orderBy('name')->get(),
             'locations'   => Location::orderBy('name')->get(),
             'departments' => $departments,
@@ -70,7 +71,7 @@ class AssetController extends Controller
 
     public function create(): Response
     {
-        $this->authorize('asset.create');
+        abort_unless(auth()->user()->canManageAssets(), 403);
 
         $departments = \App\Models\User::whereNotNull('department')
             ->pluck('department')
@@ -92,7 +93,7 @@ class AssetController extends Controller
         try {
             $data = $request->except(['images']);
             $user = auth()->user();
-            if ($user->hasRole('kajur')) {
+            if ($user->isKajur()) {
                 $userDepartments = is_array($user->department) ? $user->department : [];
                 // If Kajur submits a department, ensure it's in their allowed list
                 if (isset($data['department']) && in_array($data['department'], $userDepartments)) {
@@ -117,7 +118,6 @@ class AssetController extends Controller
 
     public function show(Asset $asset): Response
     {
-        $this->authorize('asset.view');
 
         $asset->load(['category', 'location', 'images',
             'borrowItems.request.user',
@@ -130,7 +130,7 @@ class AssetController extends Controller
 
     public function edit(Asset $asset): Response
     {
-        $this->authorize('asset.edit');
+        abort_unless(auth()->user()->canManageAssets(), 403);
 
         $asset->load(['images', 'category', 'location']);
 
@@ -155,7 +155,7 @@ class AssetController extends Controller
         try {
             $data = $request->except(['images']);
             $user = auth()->user();
-            if ($user->hasRole('kajur')) {
+            if ($user->isKajur()) {
                 $userDepartments = is_array($user->department) ? $user->department : [];
                 if (isset($data['department']) && in_array($data['department'], $userDepartments)) {
                     // Valid
@@ -179,7 +179,7 @@ class AssetController extends Controller
 
     public function destroy(Asset $asset): RedirectResponse
     {
-        $this->authorize('asset.delete');
+        abort_unless(auth()->user()->isAdmin(), 403);
 
         try {
             $this->assetService->delete($asset);
@@ -192,7 +192,7 @@ class AssetController extends Controller
 
     public function destroyImage(AssetImage $image): RedirectResponse
     {
-        $this->authorize('asset.edit');
+        abort_unless(auth()->user()->canManageAssets(), 403);
 
         $assetId = $image->asset_id;
         $this->assetService->deleteImage($image);
@@ -202,7 +202,7 @@ class AssetController extends Controller
 
     public function markLost(Asset $asset): RedirectResponse
     {
-        $this->authorize('asset.edit');
+        abort_unless(auth()->user()->canManageAssets(), 403);
 
         try {
             $this->assetService->markLost($asset);

@@ -34,16 +34,24 @@ class HandleInertiaRequests extends Middleware
         return [
             ...parent::share($request),
             'auth' => [
-                'user'        => $user,
-                'roles'       => $user ? $user->getRoleNames() : [],
-                'permissions' => $user ? $user->getAllPermissions()->pluck('name') : [],
+                'user' => $user ? [
+                    'id'         => $user->id,
+                    'name'       => $user->name,
+                    'email'      => $user->email,
+                    'nip'        => $user->nip,
+                    'department' => $user->department,
+                    'role'       => $user->role,
+                    'role_label' => $user->role_label,
+                ] : null,
             ],
             'flash' => [
                 'success' => fn() => $request->session()->get('success'),
                 'error'   => fn() => $request->session()->get('error'),
                 'warning' => fn() => $request->session()->get('warning'),
             ],
-            'unreadNotifications' => fn() => $user ? $user->unreadNotifications()->count() : 0,
+            'unreadNotifications' => fn() => $user
+                ? $user->unreadNotifications()->count()
+                : 0,
         ];
     }
 
